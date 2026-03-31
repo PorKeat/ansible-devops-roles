@@ -19,14 +19,14 @@ jenkins_manage_system_prereqs: true
 jenkins_deploy_mode: docker
 jenkins_domain: jenkins.cambostack.codes
 jenkins_enable_tls: true
-jenkins_tls_email: alexkgm2412@gmail.com
+jenkins_tls_email: change_me@example.com
 
 sonarqube_manage_system_prereqs: true
 sonarqube_deploy_mode: docker
 sonarqube_domain: sonar.cambostack.codes
 sonarqube_enable_tls: true
-sonarqube_tls_email: alexkgm2412@gmail.com
-sonarqube_db_password: change_this_password
+sonarqube_tls_email: change_me@example.com
+sonarqube_db_password: change_me_password
 ```
 
 ## 2. Example in playbook `vars`
@@ -42,7 +42,7 @@ sonarqube_db_password: change_this_password
         jenkins_deploy_mode: docker
         jenkins_domain: jenkins.cambostack.codes
         jenkins_enable_tls: true
-        jenkins_tls_email: alexkgm2412@gmail.com
+        jenkins_tls_email: change_me@example.com
 ```
 
 ## 3. Example in role `defaults/main.yml`
@@ -99,7 +99,7 @@ Main variables:
 - `jenkins_manage_system_prereqs`: let the role install its own packages. Example: `true`
 - `jenkins_domain`: manual domain for Nginx or Ingress. Example: `jenkins.cambostack.codes`
 - `jenkins_enable_tls`: enable HTTPS. Example: `true`
-- `jenkins_tls_email`: email for Certbot. Example: `alexkgm2412@gmail.com`
+- `jenkins_tls_email`: email for Certbot. Example: `change_me@example.com`
 - `jenkins_install_dir`: install path in Docker mode. Example: `/opt/jenkins`
 - `jenkins_image`: Jenkins image. Example: `jenkins/jenkins:lts`
 - `jenkins_http_port`: Jenkins web port. Example: `8080`
@@ -157,7 +157,7 @@ Main variables:
 - `sonarqube_manage_system_prereqs`: let the role install its own packages. Example: `true`
 - `sonarqube_domain`: manual domain for Nginx or Ingress. Example: `sonar.cambostack.codes`
 - `sonarqube_enable_tls`: enable HTTPS. Example: `true`
-- `sonarqube_tls_email`: email for Certbot. Example: `alexkgm2412@gmail.com`
+- `sonarqube_tls_email`: email for Certbot. Example: `change_me@example.com`
 - `sonarqube_install_dir`: install path in Docker mode. Example: `/opt/sonarqube`
 - `sonarqube_http_port`: SonarQube web port. Example: `9000`
 - `postgres_port`: PostgreSQL port. Example: `5432`
@@ -165,7 +165,7 @@ Main variables:
 - `postgres_image`: PostgreSQL image. Example: `postgres:15`
 - `sonarqube_db_name`: PostgreSQL database name. Example: `sonarqube`
 - `sonarqube_db_user`: PostgreSQL user. Example: `sonarqube`
-- `sonarqube_db_password`: PostgreSQL password. Example: `change_this_password`
+- `sonarqube_db_password`: PostgreSQL password. Example: `change_me_password`
 - `sonarqube_namespace`: Kubernetes namespace. Example: `sonarqube`
 - `sonarqube_storage_size`: SonarQube PVC size. Example: `10Gi`
 - `postgres_storage_size`: PostgreSQL PVC size. Example: `8Gi`

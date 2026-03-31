@@ -306,7 +306,7 @@ ansible_user: ubuntu
 global_deploy_mode: docker
 
 enable_tls: true
-tls_email: alexkgm2412@gmail.com
+tls_email: change_me@example.com
 
 jenkins_domain: jenkins.cambostack.codes
 sonarqube_domain: sonar.cambostack.codes
@@ -465,7 +465,7 @@ jenkins_manage_system_prereqs: true
 jenkins_deploy_mode: docker
 jenkins_domain: jenkins.cambostack.codes
 jenkins_enable_tls: true
-jenkins_tls_email: alexkgm2412@gmail.com
+jenkins_tls_email: change_me@example.com
 ```
 
 Example for SonarQube only:
@@ -479,8 +479,8 @@ sonarqube_manage_system_prereqs: true
 sonarqube_deploy_mode: docker
 sonarqube_domain: sonar.cambostack.codes
 sonarqube_enable_tls: true
-sonarqube_tls_email: alexkgm2412@gmail.com
-sonarqube_db_password: change_this_password
+sonarqube_tls_email: change_me@example.com
+sonarqube_db_password: change_me_password
 ```
 
 ### Step 6. Install collections
@@ -578,7 +578,7 @@ jenkins_manage_system_prereqs: true
 jenkins_deploy_mode: docker
 jenkins_domain: jenkins.cambostack.codes
 jenkins_enable_tls: true
-jenkins_tls_email: alexkgm2412@gmail.com
+jenkins_tls_email: change_me@example.com
 ```
 
 Example for SonarQube:
@@ -589,8 +589,8 @@ sonarqube_manage_system_prereqs: true
 sonarqube_deploy_mode: docker
 sonarqube_domain: sonar.cambostack.codes
 sonarqube_enable_tls: true
-sonarqube_tls_email: alexkgm2412@gmail.com
-sonarqube_db_password: change_this_password
+sonarqube_tls_email: change_me@example.com
+sonarqube_db_password: change_me_password
 ```
 
 ### Step 6. Install dependency collections if needed
@@ -647,14 +647,14 @@ jenkins_manage_system_prereqs: true
 jenkins_deploy_mode: docker
 jenkins_domain: jenkins.cambostack.codes
 jenkins_enable_tls: true
-jenkins_tls_email: alexkgm2412@gmail.com
+jenkins_tls_email: change_me@example.com
 
 sonarqube_manage_system_prereqs: true
 sonarqube_deploy_mode: docker
 sonarqube_domain: sonar.cambostack.codes
 sonarqube_enable_tls: true
-sonarqube_tls_email: alexkgm2412@gmail.com
-sonarqube_db_password: change_this_password
+sonarqube_tls_email: change_me@example.com
+sonarqube_db_password: change_me_password
 ```
 
 ## When to edit `defaults/main.yml` inside a role
