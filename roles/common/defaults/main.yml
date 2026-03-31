@@ -1,4 +1,9 @@
 ---
+install_docker: false
+install_nginx: false
+install_certbot: false
+install_kubectl: false
+
 common_base_packages:
   - apt-transport-https
   - ca-certificates

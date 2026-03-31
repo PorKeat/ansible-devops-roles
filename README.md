@@ -65,6 +65,7 @@ This is best when you clone the repo and want the full project structure already
 
 Files already included:
 
+- [`config.yml`](/Users/alexkgm/ansible-role/config.yml)
 - [`inventory.ini`](/Users/alexkgm/ansible-role/inventory.ini)
 - [`site.yml`](/Users/alexkgm/ansible-role/site.yml)
 - [`group_vars/all.yml`](/Users/alexkgm/ansible-role/group_vars/all.yml)
@@ -73,8 +74,8 @@ Files already included:
 
 Steps:
 
-1. Edit [`inventory.ini`](/Users/alexkgm/ansible-role/inventory.ini).
-2. Edit [`group_vars/all.yml`](/Users/alexkgm/ansible-role/group_vars/all.yml).
+1. Edit [`config.yml`](/Users/alexkgm/ansible-role/config.yml).
+2. Leave [`inventory.ini`](/Users/alexkgm/ansible-role/inventory.ini) as-is unless you want to change the host name.
 3. Install collections.
 4. Run the playbook.
 
@@ -154,9 +155,10 @@ All roles:
 
 Change values in:
 
-- [`group_vars/all.yml`](/Users/alexkgm/ansible-role/group_vars/all.yml)
+- [`config.yml`](/Users/alexkgm/ansible-role/config.yml)
 
 This is the main root-level configuration file.
+[`group_vars/all.yml`](/Users/alexkgm/ansible-role/group_vars/all.yml) is only the internal mapping file.
 
 ### If you use one role by itself
 
@@ -184,6 +186,8 @@ For role-local settings:
 - name: Deploy Jenkins and SonarQube
   hosts: devops
   become: true
+  vars_files:
+    - config.yml
   roles:
     - common
     - jenkins
@@ -218,7 +222,7 @@ Use a playbook like:
 
 ## Main root variables
 
-The root project uses these important variables in [`group_vars/all.yml`](/Users/alexkgm/ansible-role/group_vars/all.yml):
+The root project uses these important variables in [`config.yml`](/Users/alexkgm/ansible-role/config.yml):
 
 - `ansible_host`
 - `ansible_user`
@@ -227,14 +231,10 @@ The root project uses these important variables in [`group_vars/all.yml`](/Users
 - `tls_email`
 - `jenkins_domain`
 - `sonarqube_domain`
-- `jenkins_namespace`
-- `sonarqube_namespace`
-- `jenkins_storage_size`
-- `sonarqube_storage_size`
-- `postgres_storage_size`
-- `jenkins_image`
-- `sonarqube_image`
-- `postgres_image`
+- optional Jenkins overrides such as `jenkins_namespace`, `jenkins_storage_size`, and `jenkins_image`
+- optional SonarQube overrides such as `sonarqube_namespace`, `sonarqube_storage_size`, `postgres_storage_size`, `sonarqube_image`, and `postgres_image`
+
+This repo is set up so you can change everything in one place: [`config.yml`](/Users/alexkgm/ansible-role/config.yml). The shared values there are mapped into the roles automatically by [`group_vars/all.yml`](/Users/alexkgm/ansible-role/group_vars/all.yml).
 
 ## Manual domains and HTTPS
 
@@ -263,7 +263,7 @@ You must configure DNS outside Ansible.
 Use the root project when:
 
 - you want everything ready now
-- you want one inventory and one `group_vars/all.yml`
+- you want one inventory and one main config file
 - you want to deploy Jenkins and SonarQube together
 
 Use one role when:

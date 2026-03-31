@@ -2,6 +2,8 @@
 - name: Deploy Jenkins and SonarQube
   hosts: devops
   become: true
+  vars_files:
+    - config.yml
   roles:
     - common
     - jenkins

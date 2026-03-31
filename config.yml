@@ -1,0 +1,82 @@
+---
+#
+# ------------------------------------------------------------
+# Edit This File Only
+# ------------------------------------------------------------
+#
+# Change host, mode, domains, and app settings here.
+# Shared values are mapped into each role from group_vars/all.yml.
+
+#
+# ------------------------------------------------------------
+# Target Server Connection
+# ------------------------------------------------------------
+#
+ansible_host: 192.0.2.10
+ansible_user: ubuntu
+
+#
+# ------------------------------------------------------------
+# Main Deployment Settings
+# ------------------------------------------------------------
+#
+global_deploy_mode: docker
+enable_tls: false
+tls_email: change_me@example.com
+
+#
+# ------------------------------------------------------------
+# Manual Domains
+# ------------------------------------------------------------
+#
+jenkins_domain: jenkins.cambostack.codes
+sonarqube_domain: sonar.cambostack.codes
+
+#
+# ------------------------------------------------------------
+# Common Role Package Settings
+# ------------------------------------------------------------
+#
+install_docker: true
+install_nginx: true
+install_certbot: false
+install_kubectl: false
+
+#
+# ------------------------------------------------------------
+# Shared Kubernetes Settings
+# ------------------------------------------------------------
+#
+ingress_class_name: nginx
+k8s_kubeconfig_path: /home/ubuntu/.kube/config
+
+#
+# ------------------------------------------------------------
+# Jenkins Settings
+# ------------------------------------------------------------
+#
+jenkins_namespace: jenkins
+jenkins_storage_size: 10Gi
+jenkins_image: jenkins/jenkins:lts
+jenkins_http_port: 8080
+jenkins_agent_port: 50000
+jenkins_install_dir: /opt/jenkins
+jenkins_ingress_tls_secret_name: jenkins-tls
+
+#
+# ------------------------------------------------------------
+# SonarQube Settings
+# ------------------------------------------------------------
+#
+sonarqube_namespace: sonarqube
+sonarqube_storage_size: 10Gi
+postgres_storage_size: 8Gi
+sonarqube_image: sonarqube:community
+postgres_image: postgres:15
+sonarqube_http_port: 9000
+postgres_port: 5432
+sonarqube_install_dir: /opt/sonarqube
+sonarqube_db_name: sonarqube
+sonarqube_db_user: sonarqube
+sonarqube_db_password: change_me_password
+sonarqube_ingress_tls_secret_name: sonarqube-tls

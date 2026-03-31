@@ -1,9 +1,3 @@
-set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
-
-inventory := "inventory.ini"
-playbook := "site.yml"
-collections_file := "collections/requirements.yml"
-
 export ANSIBLE_LOCAL_TEMP := "/tmp/.ansible/tmp"
 
 default:
@@ -11,23 +5,23 @@ default:
 
 init:
     mkdir -p "$ANSIBLE_LOCAL_TEMP"
-    ansible-galaxy collection install -r {{collections_file}}
+    ansible-galaxy collection install -r collections/requirements.yml
 
 syntax:
     mkdir -p "$ANSIBLE_LOCAL_TEMP"
-    ansible-playbook -i {{inventory}} {{playbook}} --syntax-check
+    ansible-playbook -i inventory.ini site.yml --syntax-check
 
 run:
     mkdir -p "$ANSIBLE_LOCAL_TEMP"
-    ansible-playbook -i {{inventory}} {{playbook}}
+    ansible-playbook -i inventory.ini site.yml
 
 docker:
     mkdir -p "$ANSIBLE_LOCAL_TEMP"
-    ansible-playbook -i {{inventory}} {{playbook}} -e global_deploy_mode=docker
+    ansible-playbook -i inventory.ini site.yml -e global_deploy_mode=docker
 
 k8s:
     mkdir -p "$ANSIBLE_LOCAL_TEMP"
-    ansible-playbook -i {{inventory}} {{playbook}} -e global_deploy_mode=k8s
+    ansible-playbook -i inventory.ini site.yml -e global_deploy_mode=k8s
 
 tree:
     find . | sort

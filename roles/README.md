@@ -11,7 +11,7 @@ This guide explains:
 - where to clone the repo
 - where to put the roles
 - how to prepare a project
-- how to use `group_vars/all.yml`
+- how to use project config files
 - how to use one role or all roles
 - when to edit role `defaults/main.yml`
 - where to see the variable list
@@ -89,7 +89,7 @@ If you want one repository with many roles, the recommended approach is:
 
 1. keep all roles in one main development repo
 2. use one collection when you want to install the whole repo and choose roles in playbooks
-3. use `group_vars/all.yml` in each project for project-specific values
+3. use `group_vars` files in each project for project-specific values
 4. keep role `defaults/main.yml` for safe reusable defaults
 5. publish a role to its own repo only when you want to install that single role without downloading the others
 
@@ -105,7 +105,7 @@ If you want one repository with many roles, the recommended approach is:
 
 - install the repo as one collection
 - call only the role you need in the playbook
-- store environment-specific settings in `group_vars/all.yml`
+- store environment-specific settings in project var files such as `group_vars/all.yml`
 
 #### Best for selective install
 
@@ -118,7 +118,7 @@ If you want one repository with many roles, the recommended approach is:
 Use:
 
 - role `defaults/main.yml` for reusable default settings
-- `group_vars/all.yml` for server, domain, TLS, passwords, namespaces, and other environment-specific values
+- project var files for server, domain, TLS, passwords, namespaces, and other environment-specific values
 - separate role repos only when you need single-role download and install
 
 ### Why this is best practice
@@ -202,10 +202,11 @@ roles/
 
 ```text
 ansible-role/
+├── config.yml
 ├── collections/
 │   └── requirements.yml
 ├── group_vars/
-│   └── all.yml
+│   ├── all.yml
 ├── inventory.ini
 ├── roles/
 │   ├── common/
@@ -285,14 +286,14 @@ Example:
 
 ```ini
 [devops]
-server ansible_host=192.0.2.10 ansible_user=ubuntu
+server
 ```
 
-### Step 3. Edit `group_vars/all.yml`
+### Step 3. Edit `config.yml`
 
 File:
 
-- `group_vars/all.yml`
+- `config.yml`
 
 This is the main config file when you use the root project.
 
@@ -408,7 +409,7 @@ cp -R ~/work/ansible-role/roles/jenkins ./roles/jenkins
 
 ```ini
 [devops]
-server ansible_host=192.0.2.10 ansible_user=ubuntu
+server
 ```
 
 ### Step 4. Create `site.yml`
@@ -529,7 +530,7 @@ ansible-galaxy collection install git+https://github.com/your-org/cambostack-dev
 
 ```ini
 [devops]
-server ansible_host=192.0.2.10 ansible_user=ubuntu
+server
 ```
 
 ### Step 4. Create `site.yml`
@@ -640,9 +641,6 @@ Example:
 
 ```yaml
 ---
-ansible_host: 192.0.2.10
-ansible_user: ubuntu
-
 jenkins_manage_system_prereqs: true
 jenkins_deploy_mode: docker
 jenkins_domain: jenkins.cambostack.codes

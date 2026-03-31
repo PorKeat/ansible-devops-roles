@@ -6,10 +6,16 @@ Use variables in one of these 3 places:
 - playbook `vars`
 - role `defaults/main.yml`
 
+For this repo's root-project workflow, edit `config.yml`.
+`group_vars/all.yml` is used only for shared internal mapping.
+
 ## 1. Example in `group_vars/all.yml`
 
 ```yaml
 ---
+ansible_host: 192.0.2.10
+ansible_user: ubuntu
+
 install_docker: true
 install_nginx: true
 install_certbot: true
