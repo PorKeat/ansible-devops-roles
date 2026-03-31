@@ -1,0 +1,6 @@
+---
+- name: Create SonarQube installation directory
+  ansible.builtin.file:
+    path: "{{ sonarqube_install_dir }}"
+    state: directory
+    mode: "0755"

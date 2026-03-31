@@ -1,0 +1,11 @@
+---
+- name: Ensure Jenkins namespace exists
+  kubernetes.core.k8s:
+    kubeconfig: "{{ jenkins_kubeconfig_path }}"
+    validate_certs: "{{ jenkins_k8s_validate_certs }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ jenkins_namespace }}"

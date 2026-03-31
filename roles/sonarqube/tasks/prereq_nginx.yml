@@ -1,0 +1,19 @@
+---
+- name: Install SonarQube Nginx packages
+  ansible.builtin.apt:
+    name: "{{ sonarqube_nginx_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Disable the default Nginx site for SonarQube
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: restart nginx for sonarqube
+
+- name: Ensure Nginx service is enabled and running for SonarQube
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true

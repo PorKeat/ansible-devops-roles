@@ -1,0 +1,13 @@
+---
+- name: Prepare Jenkins Docker directories
+  ansible.builtin.include_tasks: docker_install.yml
+
+- name: Deploy Jenkins Docker Compose stack
+  ansible.builtin.include_tasks: docker_deploy.yml
+
+- name: Configure Nginx for Jenkins
+  ansible.builtin.include_tasks: nginx.yml
+
+- name: Configure TLS for Jenkins
+  ansible.builtin.include_tasks: tls.yml
+  when: jenkins_enable_tls | bool

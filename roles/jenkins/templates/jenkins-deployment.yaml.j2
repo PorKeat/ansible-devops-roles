@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: {{ jenkins_namespace }}
+spec:
+  replicas: {{ jenkins_replicas }}
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+{% if jenkins_use_pvc | bool %}
+      securityContext:
+        fsGroup: 1000
+{% endif %}
+      containers:
+        - name: jenkins
+          image: {{ jenkins_image | quote }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: agent
+              containerPort: 50000
+          env:
+            - name: JENKINS_OPTS
+              value: "--httpPort=8080"
+{% if jenkins_java_opts | length > 0 %}
+            - name: JAVA_OPTS
+              value: {{ jenkins_java_opts | quote }}
+{% endif %}
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 30
+{% if jenkins_use_pvc | bool %}
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/jenkins_home
+{% endif %}
+{% if jenkins_use_pvc | bool %}
+      volumes:
+        - name: jenkins-home
+          persistentVolumeClaim:
+            claimName: {{ jenkins_pvc_name }}
+{% endif %}

@@ -1,0 +1,39 @@
+---
+- name: Validate supported SonarQube deployment mode
+  ansible.builtin.assert:
+    that:
+      - sonarqube_deploy_mode in ["docker", "k8s"]
+    fail_msg: "sonarqube_deploy_mode must be either 'docker' or 'k8s'."
+
+- name: Validate SonarQube domain
+  ansible.builtin.assert:
+    that:
+      - sonarqube_domain is defined
+      - sonarqube_domain | length > 0
+    fail_msg: "sonarqube_domain must be set to a manually managed DNS name."
+
+- name: Validate SonarQube database settings
+  ansible.builtin.assert:
+    that:
+      - sonarqube_db_name | length > 0
+      - sonarqube_db_user | length > 0
+      - sonarqube_db_password | length > 0
+    fail_msg: "sonarqube_db_name, sonarqube_db_user, and sonarqube_db_password must all be set."
+
+- name: Validate TLS email when Docker TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - sonarqube_tls_email | length > 0
+    fail_msg: "sonarqube_tls_email must be set when sonarqube_enable_tls is true in Docker mode."
+  when:
+    - sonarqube_deploy_mode == "docker"
+    - sonarqube_enable_tls | bool
+
+- name: Validate TLS secret name when Kubernetes TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - sonarqube_ingress_tls_secret_name | length > 0
+    fail_msg: "sonarqube_ingress_tls_secret_name must be set when sonarqube_enable_tls is true in Kubernetes mode."
+  when:
+    - sonarqube_deploy_mode == "k8s"
+    - sonarqube_enable_tls | bool

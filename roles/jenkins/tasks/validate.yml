@@ -1,0 +1,31 @@
+---
+- name: Validate supported Jenkins deployment mode
+  ansible.builtin.assert:
+    that:
+      - jenkins_deploy_mode in ["docker", "k8s"]
+    fail_msg: "jenkins_deploy_mode must be either 'docker' or 'k8s'."
+
+- name: Validate Jenkins domain
+  ansible.builtin.assert:
+    that:
+      - jenkins_domain is defined
+      - jenkins_domain | length > 0
+    fail_msg: "jenkins_domain must be set to a manually managed DNS name."
+
+- name: Validate TLS email when Docker TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - jenkins_tls_email | length > 0
+    fail_msg: "jenkins_tls_email must be set when jenkins_enable_tls is true in Docker mode."
+  when:
+    - jenkins_deploy_mode == "docker"
+    - jenkins_enable_tls | bool
+
+- name: Validate TLS secret name when Kubernetes TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - jenkins_ingress_tls_secret_name | length > 0
+    fail_msg: "jenkins_ingress_tls_secret_name must be set when jenkins_enable_tls is true in Kubernetes mode."
+  when:
+    - jenkins_deploy_mode == "k8s"
+    - jenkins_enable_tls | bool

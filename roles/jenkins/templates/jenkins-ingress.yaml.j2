@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ jenkins_ingress_name }}
+  namespace: {{ jenkins_namespace }}
+{% if jenkins_ingress_annotations | length > 0 %}
+  annotations:
+{{ jenkins_ingress_annotations | to_nice_yaml(indent=2) | indent(4, true) }}
+{% endif %}
+spec:
+  ingressClassName: {{ jenkins_ingress_class_name }}
+  rules:
+    - host: {{ jenkins_domain }}
+      http:
+        paths:
+          - path: {{ jenkins_ingress_path }}
+            pathType: {{ jenkins_ingress_path_type }}
+            backend:
+              service:
+                name: {{ jenkins_service_name }}
+                port:
+                  number: {{ jenkins_http_port }}
+{% if jenkins_enable_tls | bool %}
+  tls:
+    - hosts:
+        - {{ jenkins_domain }}
+      secretName: {{ jenkins_ingress_tls_secret_name }}
+{% endif %}

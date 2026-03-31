@@ -1,0 +1,7 @@
+---
+- name: Create SonarQube ingress
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'sonarqube-ingress.yaml.j2') | from_yaml }}"

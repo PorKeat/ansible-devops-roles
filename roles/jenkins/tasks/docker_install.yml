@@ -1,0 +1,14 @@
+---
+- name: Create Jenkins installation directory
+  ansible.builtin.file:
+    path: "{{ jenkins_install_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Create Jenkins data directory
+  ansible.builtin.file:
+    path: "{{ jenkins_data_dir }}"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0755"

@@ -1,0 +1,38 @@
+---
+common_base_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - git
+  - gnupg
+  - lsb-release
+  - python3
+  - python3-apt
+  - python3-pip
+  - python3-setuptools
+  - software-properties-common
+  - unzip
+
+common_sysctl_settings:
+  - name: vm.max_map_count
+    value: "262144"
+  - name: fs.file-max
+    value: "65536"
+
+docker_packages:
+  - docker.io
+  - docker-compose-plugin
+  - python3-docker
+
+nginx_packages:
+  - nginx
+
+certbot_packages:
+  - certbot
+  - python3-certbot-nginx
+
+kubectl_apt_key_url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+kubectl_apt_repo: deb https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /
+kubectl_packages:
+  - kubectl
+  - python3-kubernetes

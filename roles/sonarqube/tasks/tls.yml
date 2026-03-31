@@ -1,0 +1,11 @@
+---
+- name: Request or renew SonarQube certificate with Certbot
+  ansible.builtin.command:
+    cmd: >-
+      certbot --nginx --non-interactive --agree-tos --redirect
+      --email {{ sonarqube_tls_email }}
+      -d {{ sonarqube_domain }}
+  args:
+    creates: "/etc/letsencrypt/live/{{ sonarqube_domain }}/fullchain.pem"
+  register: sonarqube_certbot_result
+  changed_when: "'Certificate not yet due for renewal' not in sonarqube_certbot_result.stdout"

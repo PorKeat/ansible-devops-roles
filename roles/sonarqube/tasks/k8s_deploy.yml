@@ -1,0 +1,44 @@
+---
+- name: Create PostgreSQL persistent volume claim
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'postgres-pvc.yaml.j2') | from_yaml }}"
+  when: postgres_use_pvc | bool
+
+- name: Create SonarQube persistent volume claim
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'sonarqube-pvc.yaml.j2') | from_yaml }}"
+  when: sonarqube_use_pvc | bool
+
+- name: Create PostgreSQL deployment
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'postgres-deployment.yaml.j2') | from_yaml }}"
+
+- name: Create PostgreSQL service
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'postgres-service.yaml.j2') | from_yaml }}"
+
+- name: Create SonarQube deployment
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'sonarqube-deployment.yaml.j2') | from_yaml }}"
+
+- name: Create SonarQube service
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'sonarqube-service.yaml.j2') | from_yaml }}"

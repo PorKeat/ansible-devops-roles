@@ -1,0 +1,19 @@
+---
+- name: Install Jenkins Nginx packages
+  ansible.builtin.apt:
+    name: "{{ jenkins_nginx_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Disable the default Nginx site for Jenkins
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: restart nginx for jenkins
+
+- name: Ensure Nginx service is enabled and running for Jenkins
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true

@@ -1,0 +1,7 @@
+---
+- name: Install Jenkins Certbot packages
+  ansible.builtin.apt:
+    name: "{{ jenkins_certbot_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600

@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  role_name: jenkins
+  author: alexkgm
+  description: Deploy Jenkins with Docker Compose or Kubernetes.
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - jenkins
+    - ci
+    - docker
+    - kubernetes
+dependencies: []

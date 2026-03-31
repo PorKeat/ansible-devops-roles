@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ sonarqube_pvc_name }}
+  namespace: {{ sonarqube_namespace }}
+spec:
+  accessModes:
+{% for mode in sonarqube_persistence_access_modes %}
+    - {{ mode }}
+{% endfor %}
+{% if sonarqube_storage_class_name | length > 0 %}
+  storageClassName: {{ sonarqube_storage_class_name }}
+{% endif %}
+  resources:
+    requests:
+      storage: {{ sonarqube_storage_size }}

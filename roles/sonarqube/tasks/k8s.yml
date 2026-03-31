@@ -1,0 +1,9 @@
+---
+- name: Create SonarQube namespace
+  ansible.builtin.include_tasks: k8s_namespace.yml
+
+- name: Deploy SonarQube workload resources
+  ansible.builtin.include_tasks: k8s_deploy.yml
+
+- name: Deploy SonarQube ingress resources
+  ansible.builtin.include_tasks: ingress.yml

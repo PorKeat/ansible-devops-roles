@@ -1,0 +1,19 @@
+---
+- name: Render SonarQube Nginx site
+  ansible.builtin.template:
+    src: sonarqube.nginx.conf.j2
+    dest: "{{ sonarqube_nginx_site_path }}"
+    mode: "0644"
+  notify: restart nginx for sonarqube
+
+- name: Enable SonarQube Nginx site
+  ansible.builtin.file:
+    src: "{{ sonarqube_nginx_site_path }}"
+    dest: "{{ sonarqube_nginx_site_enabled_path }}"
+    state: link
+    force: true
+  notify: restart nginx for sonarqube
+
+- name: Validate Nginx configuration for SonarQube
+  ansible.builtin.command: nginx -t
+  changed_when: false

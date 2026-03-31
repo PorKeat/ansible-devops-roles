@@ -1,0 +1,11 @@
+---
+- name: Request or renew Jenkins certificate with Certbot
+  ansible.builtin.command:
+    cmd: >-
+      certbot --nginx --non-interactive --agree-tos --redirect
+      --email {{ jenkins_tls_email }}
+      -d {{ jenkins_domain }}
+  args:
+    creates: "/etc/letsencrypt/live/{{ jenkins_domain }}/fullchain.pem"
+  register: jenkins_certbot_result
+  changed_when: "'Certificate not yet due for renewal' not in jenkins_certbot_result.stdout"

@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ sonarqube_ingress_name }}
+  namespace: {{ sonarqube_namespace }}
+{% if sonarqube_ingress_annotations | length > 0 %}
+  annotations:
+{{ sonarqube_ingress_annotations | to_nice_yaml(indent=2) | indent(4, true) }}
+{% endif %}
+spec:
+  ingressClassName: {{ sonarqube_ingress_class_name }}
+  rules:
+    - host: {{ sonarqube_domain }}
+      http:
+        paths:
+          - path: {{ sonarqube_ingress_path }}
+            pathType: {{ sonarqube_ingress_path_type }}
+            backend:
+              service:
+                name: {{ sonarqube_service_name }}
+                port:
+                  number: {{ sonarqube_http_port }}
+{% if sonarqube_enable_tls | bool %}
+  tls:
+    - hosts:
+        - {{ sonarqube_domain }}
+      secretName: {{ sonarqube_ingress_tls_secret_name }}
+{% endif %}

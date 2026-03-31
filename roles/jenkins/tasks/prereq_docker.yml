@@ -1,0 +1,20 @@
+---
+- name: Install Jenkins Docker packages
+  ansible.builtin.apt:
+    name: "{{ jenkins_docker_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure Docker service is enabled and running for Jenkins
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Add Jenkins system user to docker group
+  ansible.builtin.user:
+    name: "{{ jenkins_system_user }}"
+    groups: docker
+    append: true
+  when: jenkins_system_user | length > 0

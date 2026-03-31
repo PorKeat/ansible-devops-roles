@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  role_name: common
+  author: alexkgm
+  description: Prepare Ubuntu hosts with shared dependencies for Jenkins and SonarQube deployments.
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - ubuntu
+    - docker
+    - kubernetes
+    - nginx
+dependencies: []

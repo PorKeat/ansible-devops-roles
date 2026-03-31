@@ -1,0 +1,24 @@
+---
+namespace: cambostack
+name: devops
+version: 1.0.0
+readme: README.md
+authors:
+  - alexkgm
+description: Jenkins, SonarQube, and common DevOps roles packaged in one reusable Ansible collection.
+license:
+  - MIT
+tags:
+  - devops
+  - jenkins
+  - sonarqube
+  - docker
+  - kubernetes
+dependencies:
+  community.docker: ">=4.0.0"
+  kubernetes.core: ">=5.0.0"
+  ansible.posix: ">=2.0.0"
+repository: https://github.com/your-org/cambostack-devops-collection
+documentation: https://github.com/your-org/cambostack-devops-collection
+homepage: https://github.com/your-org/cambostack-devops-collection
+issues: https://github.com/your-org/cambostack-devops-collection/issues

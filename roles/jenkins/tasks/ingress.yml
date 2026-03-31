@@ -1,0 +1,7 @@
+---
+- name: Create Jenkins ingress
+  kubernetes.core.k8s:
+    kubeconfig: "{{ jenkins_kubeconfig_path }}"
+    validate_certs: "{{ jenkins_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'jenkins-ingress.yaml.j2') | from_yaml }}"

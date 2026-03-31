@@ -1,0 +1,17 @@
+---
+- name: Add Kubernetes repository signing key for SonarQube role
+  ansible.builtin.apt_key:
+    url: "{{ sonarqube_kubectl_apt_key_url }}"
+    state: present
+
+- name: Add Kubernetes apt repository for SonarQube role
+  ansible.builtin.apt_repository:
+    repo: "{{ sonarqube_kubectl_apt_repo }}"
+    filename: kubernetes
+    state: present
+
+- name: Install kubectl packages for SonarQube role
+  ansible.builtin.apt:
+    name: "{{ sonarqube_kubectl_packages }}"
+    state: present
+    update_cache: true

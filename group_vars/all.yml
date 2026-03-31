@@ -1,0 +1,49 @@
+---
+ansible_host: 192.0.2.10
+ansible_user: ubuntu
+
+global_deploy_mode: docker
+
+install_docker: true
+install_nginx: true
+install_certbot: true
+install_kubectl: true
+
+enable_tls: false
+tls_email: alexkgm2412@gmail.com
+
+ingress_class_name: nginx
+k8s_kubeconfig_path: "/home/{{ ansible_user }}/.kube/config"
+
+jenkins_deploy_mode: "{{ global_deploy_mode }}"
+sonarqube_deploy_mode: "{{ global_deploy_mode }}"
+jenkins_enable_tls: "{{ enable_tls }}"
+sonarqube_enable_tls: "{{ enable_tls }}"
+jenkins_tls_email: "{{ tls_email }}"
+sonarqube_tls_email: "{{ tls_email }}"
+jenkins_ingress_class_name: "{{ ingress_class_name }}"
+sonarqube_ingress_class_name: "{{ ingress_class_name }}"
+jenkins_kubeconfig_path: "{{ k8s_kubeconfig_path }}"
+sonarqube_kubeconfig_path: "{{ k8s_kubeconfig_path }}"
+
+jenkins_domain: jenkins.cambostack.codes
+sonarqube_domain: sonar.cambostack.codes
+
+jenkins_namespace: jenkins
+sonarqube_namespace: sonarqube
+
+jenkins_storage_size: 10Gi
+sonarqube_storage_size: 10Gi
+postgres_storage_size: 8Gi
+
+jenkins_image: jenkins/jenkins:lts
+sonarqube_image: sonarqube:community
+postgres_image: postgres:15
+
+jenkins_http_port: 8080
+jenkins_agent_port: 50000
+sonarqube_http_port: 9000
+postgres_port: 5432
+
+jenkins_install_dir: /opt/jenkins
+sonarqube_install_dir: /opt/sonarqube

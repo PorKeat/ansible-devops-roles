@@ -1,0 +1,11 @@
+---
+- name: Ensure SonarQube namespace exists
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ sonarqube_namespace }}"

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ sonarqube_service_name }}
+  namespace: {{ sonarqube_namespace }}
+spec:
+  selector:
+    app: {{ sonarqube_service_name }}
+  ports:
+    - name: http
+      port: {{ sonarqube_http_port }}
+      targetPort: http

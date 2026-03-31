@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ postgres_service_name }}
+  namespace: {{ sonarqube_namespace }}
+spec:
+  replicas: {{ postgres_replicas }}
+  selector:
+    matchLabels:
+      app: {{ postgres_service_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ postgres_service_name }}
+    spec:
+{% if postgres_use_pvc | bool %}
+      securityContext:
+        fsGroup: 999
+{% endif %}
+      containers:
+        - name: postgresql
+          image: {{ postgres_image | quote }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: {{ sonarqube_db_name | quote }}
+            - name: POSTGRES_USER
+              value: {{ sonarqube_db_user | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ sonarqube_db_password | quote }}
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ sonarqube_db_user }}
+                - -d
+                - {{ sonarqube_db_name }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ sonarqube_db_user }}
+                - -d
+                - {{ sonarqube_db_name }}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+{% if postgres_use_pvc | bool %}
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+{% endif %}
+{% if postgres_use_pvc | bool %}
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: {{ postgres_pvc_name }}
+{% endif %}

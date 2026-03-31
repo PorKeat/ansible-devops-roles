@@ -1,0 +1,9 @@
+---
+- name: Create Jenkins namespace
+  ansible.builtin.include_tasks: k8s_namespace.yml
+
+- name: Deploy Jenkins workload resources
+  ansible.builtin.include_tasks: k8s_deploy.yml
+
+- name: Deploy Jenkins ingress resources
+  ansible.builtin.include_tasks: ingress.yml

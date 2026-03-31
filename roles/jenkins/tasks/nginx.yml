@@ -1,0 +1,19 @@
+---
+- name: Render Jenkins Nginx site
+  ansible.builtin.template:
+    src: jenkins.nginx.conf.j2
+    dest: "{{ jenkins_nginx_site_path }}"
+    mode: "0644"
+  notify: restart nginx for jenkins
+
+- name: Enable Jenkins Nginx site
+  ansible.builtin.file:
+    src: "{{ jenkins_nginx_site_path }}"
+    dest: "{{ jenkins_nginx_site_enabled_path }}"
+    state: link
+    force: true
+  notify: restart nginx for jenkins
+
+- name: Validate Nginx configuration for Jenkins
+  ansible.builtin.command: nginx -t
+  changed_when: false
