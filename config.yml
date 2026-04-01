@@ -12,8 +12,8 @@
 # Target Server Connection
 # ------------------------------------------------------------
 #
-ansible_host: 192.0.2.10
-ansible_user: ubuntu
+ansible_host: 34.87.4.58
+ansible_user: alexkgm2412
 
 #
 # ------------------------------------------------------------
@@ -21,16 +21,16 @@ ansible_user: ubuntu
 # ------------------------------------------------------------
 #
 global_deploy_mode: docker
-enable_tls: false
-tls_email: change_me@example.com
+enable_tls: true
+tls_email: alexkgm2412@gmail.com
 
 #
 # ------------------------------------------------------------
 # Manual Domains
 # ------------------------------------------------------------
 #
-jenkins_domain: jenkins.cambostack.codes
-sonarqube_domain: sonar.cambostack.codes
+jenkins_domain: jenkins.cambostack.app
+sonarqube_domain: sonar.cambostack.app
 
 #
 # ------------------------------------------------------------
@@ -39,7 +39,7 @@ sonarqube_domain: sonar.cambostack.codes
 #
 install_docker: true
 install_nginx: true
-install_certbot: false
+install_certbot: true
 install_kubectl: false
 
 #
@@ -48,7 +48,7 @@ install_kubectl: false
 # ------------------------------------------------------------
 #
 ingress_class_name: nginx
-k8s_kubeconfig_path: /home/ubuntu/.kube/config
+k8s_kubeconfig_path: /home/alexkgm2412/.kube/config
 
 #
 # ------------------------------------------------------------
@@ -78,5 +78,5 @@ postgres_port: 5432
 sonarqube_install_dir: /opt/sonarqube
 sonarqube_db_name: sonarqube
 sonarqube_db_user: sonarqube
-sonarqube_db_password: change_me_password
+sonarqube_db_password: 1234
 sonarqube_ingress_tls_secret_name: sonarqube-tls

@@ -14,7 +14,7 @@ The `common` role prepares Ubuntu hosts for Docker-based or Kubernetes-based Jen
 ## Task layout
 
 - `tasks/install.yml`: base packages and sysctl settings
-- `tasks/docker.yml`: Docker packages, service, and Docker group membership
+- `tasks/docker.yml`: Docker official apt repo, Docker Engine packages, service, and Docker group membership
 - `tasks/nginx.yml`: Nginx package and service management
 - `tasks/certbot.yml`: Certbot packages
 - `tasks/kubectl.yml`: Kubernetes CLI and Python client packages
@@ -28,6 +28,10 @@ The `common` role prepares Ubuntu hosts for Docker-based or Kubernetes-based Jen
 - `common_base_packages`
 - `common_sysctl_settings`
 - `docker_packages`
+- `docker_conflicting_packages`
+- `docker_remove_conflicting_packages`
+- `docker_apt_key_url`
+- `docker_apt_repo`
 - `nginx_packages`
 - `certbot_packages`
 - `kubectl_packages`
@@ -35,6 +39,7 @@ The `common` role prepares Ubuntu hosts for Docker-based or Kubernetes-based Jen
 ## Notes
 
 - The role is designed for Ubuntu hosts.
+- Docker is installed from Docker's official Ubuntu apt repository.
 - `vm.max_map_count` is configured to support SonarQube requirements.
 - The role does not manage firewall rules.
 

@@ -86,7 +86,11 @@ Advanced variables:
 
 - `common_base_packages`: base Ubuntu packages. Example: `['curl', 'git', 'python3']`
 - `common_sysctl_settings`: shared sysctl settings. Example: `[{ name: vm.max_map_count, value: '262144' }]`
-- `docker_packages`: Docker package list. Example: `['docker.io', 'docker-compose-plugin']`
+- `docker_packages`: Docker package list. Example: `['docker-ce', 'docker-ce-cli', 'containerd.io']`
+- `docker_conflicting_packages`: old packages removed before installing Docker Engine. Example: `['docker.io', 'containerd', 'runc']`
+- `docker_remove_conflicting_packages`: remove old Docker packages first. Example: `true`
+- `docker_apt_key_url`: Docker apt GPG key URL. Example: `https://download.docker.com/linux/ubuntu/gpg`
+- `docker_apt_repo`: Docker apt repository. Example: `deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable`
 - `nginx_packages`: Nginx package list. Example: `['nginx']`
 - `certbot_packages`: Certbot package list. Example: `['certbot', 'python3-certbot-nginx']`
 - `kubectl_apt_key_url`: Kubernetes apt signing key URL. Example: `https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key`

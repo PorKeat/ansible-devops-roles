@@ -1,4 +1,34 @@
 ---
+- name: Resolve Jenkins domain before requesting TLS certificate
+  ansible.builtin.command:
+    cmd: "getent ahosts {{ jenkins_domain }}"
+  register: jenkins_domain_resolution
+  changed_when: false
+  failed_when: false
+
+- name: Collect resolved IP addresses for Jenkins domain
+  ansible.builtin.set_fact:
+    jenkins_domain_resolved_ips: "{{ jenkins_domain_resolution.stdout_lines | map('regex_replace', '\\s+.*$', '') | unique | list }}"
+
+- name: Determine whether Jenkins TLS DNS is ready
+  ansible.builtin.set_fact:
+    jenkins_tls_dns_ready: >-
+      {{
+        jenkins_domain_resolution.rc == 0 and (
+          (ansible_host | regex_search('^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')) is none
+          or ansible_host in jenkins_domain_resolved_ips
+        )
+      }}
+
+- name: Skip Jenkins TLS until DNS points to this server
+  ansible.builtin.debug:
+    msg: >-
+      Skipping Jenkins TLS because {{ jenkins_domain }} is not resolvable yet
+      or does not point to {{ ansible_host }}.
+  when:
+    - jenkins_tls_skip_if_dns_not_ready | bool
+    - not jenkins_tls_dns_ready | bool
+
 - name: Request or renew Jenkins certificate with Certbot
   ansible.builtin.command:
     cmd: >-
@@ -9,3 +39,6 @@
     creates: "/etc/letsencrypt/live/{{ jenkins_domain }}/fullchain.pem"
   register: jenkins_certbot_result
   changed_when: "'Certificate not yet due for renewal' not in jenkins_certbot_result.stdout"
+  when:
+    - not jenkins_tls_skip_if_dns_not_ready | bool
+      or jenkins_tls_dns_ready | bool

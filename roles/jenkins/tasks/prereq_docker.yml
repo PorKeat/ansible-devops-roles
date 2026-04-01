@@ -1,5 +1,37 @@
 ---
-- name: Install Jenkins Docker packages
+- name: Gather installed packages for Jenkins Docker conflict checks
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Remove conflicting Docker packages for Jenkins
+  ansible.builtin.apt:
+    name: "{{ jenkins_docker_conflicting_packages | select('in', ansible_facts.packages.keys() | list) | list }}"
+    state: absent
+    purge: true
+  when:
+    - jenkins_remove_conflicting_docker_packages | bool
+    - (jenkins_docker_conflicting_packages | select('in', ansible_facts.packages.keys() | list) | list) | length > 0
+
+- name: Ensure Docker apt keyring directory exists for Jenkins
+  ansible.builtin.file:
+    path: "{{ jenkins_docker_apt_keyring_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Install Docker official apt GPG key for Jenkins
+  ansible.builtin.get_url:
+    url: "{{ jenkins_docker_apt_key_url }}"
+    dest: "{{ jenkins_docker_apt_key_path }}"
+    mode: "0644"
+
+- name: Add Docker official apt repository for Jenkins
+  ansible.builtin.apt_repository:
+    repo: "{{ jenkins_docker_apt_repo }}"
+    filename: "{{ jenkins_docker_apt_repo_filename }}"
+    state: present
+    update_cache: true
+
+- name: Install Jenkins Docker Engine packages
   ansible.builtin.apt:
     name: "{{ jenkins_docker_packages }}"
     state: present

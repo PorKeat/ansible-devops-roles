@@ -1,5 +1,37 @@
 ---
-- name: Install SonarQube Docker packages
+- name: Gather installed packages for SonarQube Docker conflict checks
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Remove conflicting Docker packages for SonarQube
+  ansible.builtin.apt:
+    name: "{{ sonarqube_docker_conflicting_packages | select('in', ansible_facts.packages.keys() | list) | list }}"
+    state: absent
+    purge: true
+  when:
+    - sonarqube_remove_conflicting_docker_packages | bool
+    - (sonarqube_docker_conflicting_packages | select('in', ansible_facts.packages.keys() | list) | list) | length > 0
+
+- name: Ensure Docker apt keyring directory exists for SonarQube
+  ansible.builtin.file:
+    path: "{{ sonarqube_docker_apt_keyring_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Install Docker official apt GPG key for SonarQube
+  ansible.builtin.get_url:
+    url: "{{ sonarqube_docker_apt_key_url }}"
+    dest: "{{ sonarqube_docker_apt_key_path }}"
+    mode: "0644"
+
+- name: Add Docker official apt repository for SonarQube
+  ansible.builtin.apt_repository:
+    repo: "{{ sonarqube_docker_apt_repo }}"
+    filename: "{{ sonarqube_docker_apt_repo_filename }}"
+    state: present
+    update_cache: true
+
+- name: Install SonarQube Docker Engine packages
   ansible.builtin.apt:
     name: "{{ sonarqube_docker_packages }}"
     state: present
