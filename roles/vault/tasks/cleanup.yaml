@@ -1,4 +1,3 @@
----
 - name: Remove Vault Docker resources
   ansible.builtin.include_tasks: cleanup_docker.yaml
   when: vault_deploy_mode == "docker"
@@ -6,3 +5,11 @@
 - name: Remove Vault Kubernetes resources
   ansible.builtin.include_tasks: cleanup_k8s.yaml
   when: vault_deploy_mode == "k8s"
+
+- name: Remove local vault_init.json
+  ansible.builtin.file:
+    path: "{{ playbook_dir | dirname }}/vault_init.json"
+    state: absent
+  delegate_to: 127.0.0.1
+  become: false
+  ignore_errors: true
