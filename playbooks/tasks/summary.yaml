@@ -1,7 +1,7 @@
 ---
 - name: Read local Vault credentials
   ansible.builtin.set_fact:
-    vault_init_file: "{{ lookup('file', '../vault_init.json', errors='ignore') | from_json | default({}) }}"
+    vault_init_file: "{{ lookup('file', '../vault_init.json', errors='ignore') | default('{}', true) | from_json }}"
   delegate_to: localhost
 
 - name: Set Jenkins summary host
