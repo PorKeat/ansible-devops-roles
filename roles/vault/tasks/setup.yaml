@@ -28,6 +28,9 @@
         content: "{{ vault_init_output.stdout }}"
         dest: "{{ playbook_dir | dirname }}/vault_init.json"
       delegate_to: localhost
+      vars:
+        ansible_connection: local
+        ansible_host: localhost
 
     - name: Parse initialization data
       ansible.builtin.set_fact:
