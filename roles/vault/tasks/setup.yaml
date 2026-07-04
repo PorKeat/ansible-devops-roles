@@ -26,7 +26,7 @@
     - name: Save Vault credentials locally
       ansible.builtin.copy:
         content: "{{ vault_init_output.stdout }}"
-        dest: "vault_init.json"
+        dest: "{{ playbook_dir }}/../vault_init.json"
       delegate_to: localhost
 
     - name: Parse initialization data
@@ -125,3 +125,25 @@
           IMPORTANT: Save these credentials securely!
           They will not be displayed again.
           ==================================================
+
+- name: Auto-unseal Vault if initialized but sealed
+  when:
+    - vault_status.initialized | default(false)
+    - vault_status.sealed | default(false)
+  block:
+    - name: Load Vault credentials from local file
+      ansible.builtin.set_fact:
+        vault_init_data: "{{ lookup('file', playbook_dir ~ '/../vault_init.json', errors='ignore') | from_json | default({}) }}"
+      delegate_to: localhost
+
+    - name: Fail if vault_init.json is missing
+      ansible.builtin.fail:
+        msg: "Vault is sealed but vault_init.json is missing locally. Please unseal manually."
+      when: vault_init_data.unseal_keys_b64 is not defined
+
+    - name: Unseal Vault automatically
+      ansible.builtin.command:
+        cmd: "docker exec -e VAULT_ADDR=http://127.0.0.1:8200 {{ vault_container_name }} vault operator unseal {{ item }}"
+      loop: "{{ vault_init_data.unseal_keys_b64[:3] }}"
+      no_log: true
+      changed_when: true
