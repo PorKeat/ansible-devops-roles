@@ -138,6 +138,8 @@ vault_version: 1.21.4
 # testing: uses vault_root_token below
 # production: Vault generates root token during vault operator init
 vault_mode: production
+# auto-unseal Vault automatically using local vault_init.json if it is sealed
+vault_auto_unseal: true
 vault_http_port: 8200
 vault_cluster_port: 8201
 # testing only: run just vault-token

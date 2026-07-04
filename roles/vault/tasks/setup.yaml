@@ -128,6 +128,7 @@
 
 - name: Auto-unseal Vault if initialized but sealed
   when:
+    - vault_auto_unseal | default(true) | bool
     - vault_status.initialized | default(false)
     - vault_status.sealed | default(false)
   block:
