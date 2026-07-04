@@ -26,7 +26,7 @@
     - name: Save Vault credentials locally
       ansible.builtin.copy:
         content: "{{ vault_init_output.stdout }}"
-        dest: "{{ playbook_dir }}/../vault_init.json"
+        dest: "{{ playbook_dir | dirname }}/vault_init.json"
       delegate_to: localhost
 
     - name: Parse initialization data
@@ -134,7 +134,7 @@
   block:
     - name: Load Vault credentials from local file
       ansible.builtin.set_fact:
-        vault_init_data: "{{ lookup('file', playbook_dir ~ '/../vault_init.json', errors='ignore') | from_json | default({}) }}"
+        vault_init_data: "{{ lookup('file', playbook_dir | dirname ~ '/vault_init.json', errors='ignore') | from_json | default({}) }}"
       delegate_to: localhost
 
     - name: Fail if vault_init.json is missing
