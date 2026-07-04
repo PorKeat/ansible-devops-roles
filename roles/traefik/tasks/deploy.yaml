@@ -1,0 +1,56 @@
+---
+- name: Ensure Traefik directory exists
+  ansible.builtin.file:
+    path: /opt/traefik
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create Traefik data directory for ACME (Let's Encrypt)
+  ansible.builtin.file:
+    path: /opt/traefik/data
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure acme.json exists with correct permissions
+  ansible.builtin.file:
+    path: /opt/traefik/data/acme.json
+    state: touch
+    owner: root
+    group: root
+    mode: '0600'
+    modification_time: preserve
+    access_time: preserve
+
+- name: Render Traefik dynamic configuration
+  ansible.builtin.template:
+    src: dynamic_conf.yaml.j2
+    dest: /opt/traefik/data/dynamic_conf.yaml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Traefik
+
+- name: Render Traefik Docker Compose file
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: /opt/traefik/docker-compose.yaml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Traefik
+
+- name: Create global Docker network for Traefik proxy
+  community.docker.docker_network:
+    name: traefik_proxy
+    state: present
+  ignore_errors: true
+
+- name: Start Traefik Docker Compose stack
+  community.docker.docker_compose_v2:
+    project_src: /opt/traefik
+    state: present
+    pull: always

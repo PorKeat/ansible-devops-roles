@@ -1,0 +1,17 @@
+---
+- name: Remove Traefik Docker Compose stack
+  community.docker.docker_compose_v2:
+    project_src: /opt/traefik
+    state: absent
+  ignore_errors: true
+
+- name: Remove global Docker network for Traefik proxy
+  community.docker.docker_network:
+    name: traefik_proxy
+    state: absent
+  ignore_errors: true
+
+- name: Ensure Traefik directory is removed
+  ansible.builtin.file:
+    path: /opt/traefik
+    state: absent
