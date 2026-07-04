@@ -1,0 +1,13 @@
+---
+- name: Prepare SonarQube Docker directories
+  ansible.builtin.include_tasks: docker_install.yaml
+  when: not (web_only | default(false) | bool)
+
+- name: Deploy SonarQube Docker Compose stack
+  ansible.builtin.include_tasks: docker_deploy.yaml
+  when: not (web_only | default(false) | bool)
+
+
+
+- name: Show SonarQube access information
+  ansible.builtin.include_tasks: access.yaml

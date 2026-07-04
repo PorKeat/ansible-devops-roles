@@ -1,0 +1,59 @@
+---
+- name: Check for MinIO Docker Compose file
+  ansible.builtin.stat:
+    path: "{{ minio_compose_file }}"
+  register: minio_compose_file_stat
+
+- name: Stop MinIO Docker Compose stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ minio_install_dir }}"
+    project_name: "{{ minio_compose_project_name }}"
+    state: absent
+    remove_images: local
+    remove_orphans: true
+    remove_volumes: "{{ minio_cleanup_remove_docker_volumes }}"
+  when: minio_compose_file_stat.stat.exists
+
+- name: Gather service facts for MinIO cleanup
+  ansible.builtin.service_facts:
+
+- name: Remove MinIO Nginx enabled site
+  ansible.builtin.file:
+    path: "{{ minio_nginx_site_enabled_path }}"
+    state: absent
+  register: minio_nginx_enabled_cleanup
+
+- name: Remove MinIO Nginx site file
+  ansible.builtin.file:
+    path: "{{ minio_nginx_site_path }}"
+    state: absent
+  register: minio_nginx_site_cleanup
+
+- name: Validate Nginx configuration after MinIO cleanup
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  when: "'nginx.service' in ansible_facts.services"
+
+- name: Restart Nginx after MinIO cleanup
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+  when:
+    - "'nginx.service' in ansible_facts.services"
+    - minio_nginx_enabled_cleanup.changed or minio_nginx_site_cleanup.changed
+
+- name: Remove MinIO TLS certificate
+  ansible.builtin.command:
+    cmd: "certbot delete --non-interactive --cert-name {{ minio_api_domain }}"
+  register: minio_certbot_delete
+  changed_when: minio_certbot_delete.rc == 0
+  failed_when: false
+  when:
+    - minio_cleanup_remove_certificates | bool
+    - minio_api_domain | length > 0
+
+- name: Remove MinIO installation directory
+  ansible.builtin.file:
+    path: "{{ minio_install_dir }}"
+    state: absent
+  when: minio_cleanup_remove_data | bool

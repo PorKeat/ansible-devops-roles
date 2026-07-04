@@ -1,0 +1,8 @@
+---
+- name: Remove SonarQube Docker resources
+  ansible.builtin.include_tasks: cleanup_docker.yaml
+  when: sonarqube_deploy_mode == "docker"
+
+- name: Remove SonarQube Kubernetes resources
+  ansible.builtin.include_tasks: cleanup_k8s.yaml
+  when: sonarqube_deploy_mode == "k8s"

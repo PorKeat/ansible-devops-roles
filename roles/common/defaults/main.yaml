@@ -1,0 +1,92 @@
+---
+install_docker: false
+install_nginx: false
+install_certbot: false
+install_kubectl: false
+install_helm: false
+common_cleanup_everything: false
+common_cleanup_remove_docker_data: true
+common_cleanup_remove_certificates: true
+common_cleanup_remove_sysctl_file: true
+common_apt_cache_valid_time: 43200
+
+common_base_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - git
+  - gnupg
+  - lsb-release
+  - python3
+  - python3-apt
+  - python3-pip
+  - python3-setuptools
+  - software-properties-common
+  - unzip
+
+common_sysctl_settings:
+  - name: vm.max_map_count
+    value: "262144"
+  - name: fs.file-max
+    value: "65536"
+common_sysctl_file: /etc/sysctl.d/99-common-role.conf
+
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+  - python3-docker
+docker_conflicting_packages:
+  - docker.io
+  - docker-compose
+  - docker-compose-v2
+  - docker-doc
+  - podman-docker
+  - containerd
+  - runc
+docker_remove_conflicting_packages: true
+docker_apt_key_url: https://download.docker.com/linux/ubuntu/gpg
+docker_apt_keyring_dir: /etc/apt/keyrings
+docker_apt_key_path: "{{ docker_apt_keyring_dir }}/docker.asc"
+docker_apt_repo_filename: docker
+docker_apt_repo: >-
+  deb [signed-by={{ docker_apt_key_path }}]
+  https://download.docker.com/linux/ubuntu
+  {{ ansible_facts['distribution_release'] | lower }}
+  stable
+
+nginx_packages:
+  - nginx
+nginx_main_config_path: /etc/nginx/nginx.conf
+nginx_required_directories:
+  - /etc/nginx
+  - /etc/nginx/conf.d
+  - /etc/nginx/sites-available
+  - /etc/nginx/sites-enabled
+  - /var/log/nginx
+
+certbot_packages:
+  - certbot
+  - python3-certbot-nginx
+
+kubectl_apt_key_url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+kubectl_apt_repo: deb https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /
+kubectl_packages:
+  - kubectl
+kubectl_python_packages:
+  - "kubernetes>=24.2.0"
+  - "PyYAML>=3.11"
+
+helm_apt_key_url: https://packages.buildkite.com/helm-linux/helm-debian/gpgkey
+helm_apt_keyring_dir: /usr/share/keyrings
+helm_apt_key_path: "{{ helm_apt_keyring_dir }}/helm.gpg"
+helm_apt_repo_filename: helm-stable-debian
+helm_apt_repo: >-
+  deb [signed-by={{ helm_apt_key_path }}]
+  https://packages.buildkite.com/helm-linux/helm-debian/any/
+  any
+  main
+helm_packages:
+  - helm

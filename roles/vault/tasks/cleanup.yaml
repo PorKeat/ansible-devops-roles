@@ -1,0 +1,8 @@
+---
+- name: Remove Vault Docker resources
+  ansible.builtin.include_tasks: cleanup_docker.yaml
+  when: vault_deploy_mode == "docker"
+
+- name: Remove Vault Kubernetes resources
+  ansible.builtin.include_tasks: cleanup_k8s.yaml
+  when: vault_deploy_mode == "k8s"

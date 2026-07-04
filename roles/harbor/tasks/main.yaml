@@ -1,0 +1,19 @@
+---
+- name: Validate Harbor configuration
+  ansible.builtin.include_tasks: validate.yaml
+
+- name: Deploy Harbor in Docker mode
+  ansible.builtin.include_tasks: docker.yaml
+  when:
+    - harbor_state == "present"
+    - harbor_deploy_mode == "docker"
+
+- name: Deploy Harbor in Kubernetes mode
+  ansible.builtin.include_tasks: k8s.yaml
+  when:
+    - harbor_state == "present"
+    - harbor_deploy_mode == "k8s"
+
+- name: Remove Harbor deployment resources
+  ansible.builtin.include_tasks: cleanup.yaml
+  when: harbor_state == "absent"

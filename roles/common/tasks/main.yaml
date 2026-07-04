@@ -1,0 +1,42 @@
+---
+- name: Run common cleanup flow
+  ansible.builtin.include_tasks: cleanup.yaml
+  when: common_cleanup_everything | bool
+
+- name: Build common install task list
+  ansible.builtin.set_fact:
+    common_install_task_files: >-
+      {{
+        ((web_only | default(false) | bool) | ternary([], ['install.yaml']))
+        + (
+            (
+              not (web_only | default(false) | bool)
+              and install_docker | bool
+            )
+            | ternary(['docker.yaml'], [])
+          )
+        + (
+
+            (
+              not (web_only | default(false) | bool)
+              and install_kubectl | bool
+            )
+            | ternary(['kubectl.yaml'], [])
+          )
+        + (
+            (
+              not (web_only | default(false) | bool)
+              and install_helm | bool
+            )
+            | ternary(['helm.yaml'], [])
+          )
+      }}
+  when: not common_cleanup_everything | bool
+
+- name: Run common install flow
+  ansible.builtin.include_tasks: "{{ common_install_task_file }}"
+  loop: "{{ common_install_task_files }}"
+  loop_control:
+    loop_var: common_install_task_file
+    label: "{{ common_install_task_file }}"
+  when: not common_cleanup_everything | bool

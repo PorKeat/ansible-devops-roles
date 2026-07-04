@@ -1,0 +1,20 @@
+---
+- name: Check for Harbor Docker Compose file
+  ansible.builtin.stat:
+    path: "{{ harbor_compose_file }}"
+  register: harbor_compose_file_stat
+
+- name: Stop Harbor Docker Compose stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ harbor_install_dir }}"
+    state: absent
+    remove_images: local
+    remove_orphans: true
+    remove_volumes: "{{ harbor_cleanup_remove_docker_volumes }}"
+  when: harbor_compose_file_stat.stat.exists
+
+- name: Remove Harbor installation directory
+  ansible.builtin.file:
+    path: "{{ harbor_install_dir }}"
+    state: absent
+  when: harbor_cleanup_remove_data | bool

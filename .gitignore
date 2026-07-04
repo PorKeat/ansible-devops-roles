@@ -1,0 +1,16 @@
+.DS_Store
+.idea/
+.vscode/
+*.retry
+*.swp
+*.swo
+*.orig
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ansible/
+.env
+.env.*
+.vault_pass
+.vault_pass.txt
+

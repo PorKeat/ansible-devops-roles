@@ -1,0 +1,53 @@
+---
+- name: Remove MinIO ingress
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: absent
+    definition: "{{ lookup('template', 'minio-ingress.yaml.j2') | from_yaml }}"
+
+- name: Remove MinIO Kubernetes TLS secret
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: absent
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ minio_ingress_tls_secret_name }}"
+        namespace: "{{ minio_namespace }}"
+
+- name: Remove MinIO service
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: absent
+    definition: "{{ lookup('template', 'minio-service.yaml.j2') | from_yaml }}"
+
+- name: Remove MinIO deployment
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: absent
+    definition: "{{ lookup('template', 'minio-deployment.yaml.j2') | from_yaml }}"
+
+- name: Remove MinIO persistent volume claim
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: absent
+    definition: "{{ lookup('template', 'minio-pvc.yaml.j2') | from_yaml }}"
+  when: minio_use_pvc | bool
+
+- name: Remove MinIO namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: absent
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ minio_namespace }}"
+  when: minio_cleanup_remove_namespace | bool

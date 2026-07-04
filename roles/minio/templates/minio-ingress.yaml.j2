@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ minio_ingress_name }}
+  namespace: {{ minio_namespace }}
+{% if minio_ingress_annotations | length > 0 %}
+  annotations:
+{{ minio_ingress_annotations | to_nice_yaml(indent=2) | indent(4, true) }}
+{% endif %}
+spec:
+  ingressClassName: {{ minio_ingress_class_name }}
+  rules:
+    - host: {{ minio_api_domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ minio_service_name }}
+                port:
+                  number: {{ minio_api_port }}
+    - host: {{ minio_console_domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ minio_service_name }}
+                port:
+                  number: {{ minio_console_port }}
+{% if minio_enable_tls | bool %}
+  tls:
+    - hosts:
+        - {{ minio_api_domain }}
+        - {{ minio_console_domain }}
+      secretName: {{ minio_ingress_tls_secret_name }}
+{% endif %}

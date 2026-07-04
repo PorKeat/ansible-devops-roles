@@ -1,0 +1,115 @@
+---
+- name: Build runtime targets
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - name: Build dynamic inventory
+      ansible.builtin.include_tasks: tasks/bootstrap.yaml
+
+- name: Prepare shared host dependencies
+  hosts: common_targets
+  become: true
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  pre_tasks:
+    - name: Resolve Kubernetes kubeconfig path
+      ansible.builtin.include_tasks: tasks/resolve_kubeconfig.yaml
+      when: platform_deploy_mode == "k8s"
+  roles:
+    - role: common
+      when: deployment_state != "absent"
+
+- name: Deploy Traefik Proxy
+  hosts: all
+  become: true
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  roles:
+    - traefik
+
+- name: Deploy Jenkins
+  hosts: jenkins_targets
+  become: true
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  roles:
+    - role: jenkins
+      when: install_jenkins | bool
+
+- name: Deploy SonarQube
+  hosts: sonarqube_targets
+  become: true
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  roles:
+    - role: sonarqube
+      when: install_sonarqube | bool
+
+- name: Deploy Harbor
+  hosts: harbor_targets
+  become: true
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  roles:
+    - role: harbor
+      when: install_harbor | bool
+
+- name: Deploy Vault
+  hosts: vault_targets
+  become: true
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  roles:
+    - role: vault
+      when: install_vault | bool
+
+- name: Deploy MinIO
+  hosts: minio_targets
+  become: true
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  roles:
+    - role: minio
+      when: install_minio | bool
+
+- name: Remove common host dependencies
+  hosts: common_targets
+  become: true
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  roles:
+    - role: common
+      vars:
+        common_cleanup_everything: true
+      when:
+        - deployment_state == "absent"
+        - destroy_all | default(false) | bool
+
+- name: Show final access summary
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - name: Print deployment summary
+      ansible.builtin.include_tasks: tasks/summary.yaml

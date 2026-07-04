@@ -1,0 +1,19 @@
+---
+- name: Validate Vault configuration
+  ansible.builtin.include_tasks: validate.yaml
+
+- name: Deploy Vault in Docker mode
+  ansible.builtin.include_tasks: docker.yaml
+  when:
+    - vault_state == "present"
+    - vault_deploy_mode == "docker"
+
+- name: Deploy Vault in Kubernetes mode
+  ansible.builtin.include_tasks: k8s.yaml
+  when:
+    - vault_state == "present"
+    - vault_deploy_mode == "k8s"
+
+- name: Remove Vault deployment resources
+  ansible.builtin.include_tasks: cleanup.yaml
+  when: vault_state == "absent"

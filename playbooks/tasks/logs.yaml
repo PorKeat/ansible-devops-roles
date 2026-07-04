@@ -1,0 +1,295 @@
+---
+- name: Set requested log service
+  ansible.builtin.set_fact:
+    requested_log_service: "{{ log_service | default('all') }}"
+    requested_log_lines: "{{ log_lines | default(100) | int }}"
+
+- name: Show Jenkins Docker logs
+  ansible.builtin.command:
+    cmd: "docker logs --tail {{ requested_log_lines }} {{ jenkins_container_name }}"
+  register: jenkins_docker_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['jenkins_targets']
+    - requested_log_service in ['all', 'jenkins']
+    - jenkins_deploy_mode == "docker"
+
+- name: Print Jenkins Docker logs
+  ansible.builtin.debug:
+    msg: |
+      ===== Jenkins ({{ inventory_hostname }}) =====
+      {{ jenkins_docker_logs.stdout | default(jenkins_docker_logs.stderr, true) | default('No logs found.', true) }}
+  when:
+    - jenkins_docker_logs is defined
+    - inventory_hostname in groups['jenkins_targets']
+    - requested_log_service in ['all', 'jenkins']
+    - jenkins_deploy_mode == "docker"
+
+- name: List Jenkins Kubernetes pods
+  ansible.builtin.command:
+    cmd: "kubectl --kubeconfig {{ jenkins_kubeconfig_path }} -n {{ jenkins_namespace }} get pods -o name"
+  register: jenkins_k8s_pods
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['jenkins_targets']
+    - requested_log_service in ['all', 'jenkins']
+    - jenkins_deploy_mode == "k8s"
+
+- name: Show Jenkins Kubernetes logs
+  ansible.builtin.command:
+    cmd: "kubectl --kubeconfig {{ jenkins_kubeconfig_path }} -n {{ jenkins_namespace }} logs --all-containers=true --tail={{ requested_log_lines }} {{ jenkins_k8s_pod }}"
+  loop: "{{ jenkins_k8s_pods.stdout_lines | default([]) }}"
+  loop_control:
+    loop_var: jenkins_k8s_pod
+  register: jenkins_k8s_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['jenkins_targets']
+    - requested_log_service in ['all', 'jenkins']
+    - jenkins_deploy_mode == "k8s"
+
+- name: Print Jenkins Kubernetes logs
+  ansible.builtin.debug:
+    msg: |
+      ===== Jenkins ({{ inventory_hostname }}) {{ item.item }} =====
+      {{ item.stdout | default(item.stderr, true) | default('No logs found.', true) }}
+  loop: "{{ jenkins_k8s_logs.results | default([]) }}"
+  when:
+    - inventory_hostname in groups['jenkins_targets']
+    - requested_log_service in ['all', 'jenkins']
+    - jenkins_deploy_mode == "k8s"
+
+- name: Show SonarQube Docker logs
+  ansible.builtin.command:
+    cmd: "docker compose -f {{ sonarqube_compose_file }} logs --tail {{ requested_log_lines }}"
+  register: sonarqube_docker_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['sonarqube_targets']
+    - requested_log_service in ['all', 'sonarqube']
+    - sonarqube_deploy_mode == "docker"
+
+- name: Print SonarQube Docker logs
+  ansible.builtin.debug:
+    msg: |
+      ===== SonarQube ({{ inventory_hostname }}) =====
+      {{ sonarqube_docker_logs.stdout | default(sonarqube_docker_logs.stderr, true) | default('No logs found.', true) }}
+  when:
+    - sonarqube_docker_logs is defined
+    - inventory_hostname in groups['sonarqube_targets']
+    - requested_log_service in ['all', 'sonarqube']
+    - sonarqube_deploy_mode == "docker"
+
+- name: List SonarQube Kubernetes pods
+  ansible.builtin.command:
+    cmd: "kubectl --kubeconfig {{ sonarqube_kubeconfig_path }} -n {{ sonarqube_namespace }} get pods -o name"
+  register: sonarqube_k8s_pods
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['sonarqube_targets']
+    - requested_log_service in ['all', 'sonarqube']
+    - sonarqube_deploy_mode == "k8s"
+
+- name: Show SonarQube Kubernetes logs
+  ansible.builtin.command:
+    cmd: "kubectl --kubeconfig {{ sonarqube_kubeconfig_path }} -n {{ sonarqube_namespace }} logs --all-containers=true --tail={{ requested_log_lines }} {{ sonarqube_k8s_pod }}"
+  loop: "{{ sonarqube_k8s_pods.stdout_lines | default([]) }}"
+  loop_control:
+    loop_var: sonarqube_k8s_pod
+  register: sonarqube_k8s_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['sonarqube_targets']
+    - requested_log_service in ['all', 'sonarqube']
+    - sonarqube_deploy_mode == "k8s"
+
+- name: Print SonarQube Kubernetes logs
+  ansible.builtin.debug:
+    msg: |
+      ===== SonarQube ({{ inventory_hostname }}) {{ item.item }} =====
+      {{ item.stdout | default(item.stderr, true) | default('No logs found.', true) }}
+  loop: "{{ sonarqube_k8s_logs.results | default([]) }}"
+  when:
+    - inventory_hostname in groups['sonarqube_targets']
+    - requested_log_service in ['all', 'sonarqube']
+    - sonarqube_deploy_mode == "k8s"
+
+- name: Show Harbor Docker logs
+  ansible.builtin.command:
+    cmd: "docker compose -f {{ harbor_compose_file }} logs --tail {{ requested_log_lines }}"
+  register: harbor_docker_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['harbor_targets']
+    - requested_log_service in ['all', 'harbor']
+    - harbor_deploy_mode == "docker"
+
+- name: Print Harbor Docker logs
+  ansible.builtin.debug:
+    msg: |
+      ===== Harbor ({{ inventory_hostname }}) =====
+      {{ harbor_docker_logs.stdout | default(harbor_docker_logs.stderr, true) | default('No logs found.', true) }}
+  when:
+    - harbor_docker_logs is defined
+    - inventory_hostname in groups['harbor_targets']
+    - requested_log_service in ['all', 'harbor']
+    - harbor_deploy_mode == "docker"
+
+- name: List Harbor Kubernetes pods
+  ansible.builtin.command:
+    cmd: "kubectl --kubeconfig {{ harbor_kubeconfig_path }} -n {{ harbor_namespace }} get pods -o name"
+  register: harbor_k8s_pods
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['harbor_targets']
+    - requested_log_service in ['all', 'harbor']
+    - harbor_deploy_mode == "k8s"
+
+- name: Show Harbor Kubernetes logs
+  ansible.builtin.command:
+    cmd: "kubectl --kubeconfig {{ harbor_kubeconfig_path }} -n {{ harbor_namespace }} logs --all-containers=true --tail={{ requested_log_lines }} {{ harbor_k8s_pod }}"
+  loop: "{{ harbor_k8s_pods.stdout_lines | default([]) }}"
+  loop_control:
+    loop_var: harbor_k8s_pod
+  register: harbor_k8s_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['harbor_targets']
+    - requested_log_service in ['all', 'harbor']
+    - harbor_deploy_mode == "k8s"
+
+- name: Print Harbor Kubernetes logs
+  ansible.builtin.debug:
+    msg: |
+      ===== Harbor ({{ inventory_hostname }}) {{ item.item }} =====
+      {{ item.stdout | default(item.stderr, true) | default('No logs found.', true) }}
+  loop: "{{ harbor_k8s_logs.results | default([]) }}"
+  when:
+    - inventory_hostname in groups['harbor_targets']
+    - requested_log_service in ['all', 'harbor']
+    - harbor_deploy_mode == "k8s"
+
+- name: Show Vault Docker logs
+  ansible.builtin.command:
+    cmd: "docker logs --tail {{ requested_log_lines }} {{ vault_container_name }}"
+  register: vault_docker_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['vault_targets']
+    - requested_log_service in ['all', 'vault']
+    - vault_deploy_mode == "docker"
+
+- name: Print Vault Docker logs
+  ansible.builtin.debug:
+    msg: |
+      ===== Vault ({{ inventory_hostname }}) =====
+      {{ vault_docker_logs.stdout | default(vault_docker_logs.stderr, true) | default('No logs found.', true) }}
+  when:
+    - vault_docker_logs is defined
+    - inventory_hostname in groups['vault_targets']
+    - requested_log_service in ['all', 'vault']
+    - vault_deploy_mode == "docker"
+
+- name: List Vault Kubernetes pods
+  ansible.builtin.command:
+    cmd: "kubectl --kubeconfig {{ vault_kubeconfig_path }} -n {{ vault_namespace }} get pods -o name"
+  register: vault_k8s_pods
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['vault_targets']
+    - requested_log_service in ['all', 'vault']
+    - vault_deploy_mode == "k8s"
+
+- name: Show Vault Kubernetes logs
+  ansible.builtin.command:
+    cmd: "kubectl --kubeconfig {{ vault_kubeconfig_path }} -n {{ vault_namespace }} logs --all-containers=true --tail={{ requested_log_lines }} {{ vault_k8s_pod }}"
+  loop: "{{ vault_k8s_pods.stdout_lines | default([]) }}"
+  loop_control:
+    loop_var: vault_k8s_pod
+  register: vault_k8s_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['vault_targets']
+    - requested_log_service in ['all', 'vault']
+    - vault_deploy_mode == "k8s"
+
+- name: Print Vault Kubernetes logs
+  ansible.builtin.debug:
+    msg: |
+      ===== Vault ({{ inventory_hostname }}) {{ item.item }} =====
+      {{ item.stdout | default(item.stderr, true) | default('No logs found.', true) }}
+  loop: "{{ vault_k8s_logs.results | default([]) }}"
+  when:
+    - inventory_hostname in groups['vault_targets']
+    - requested_log_service in ['all', 'vault']
+    - vault_deploy_mode == "k8s"
+
+- name: Show MinIO Docker logs
+  ansible.builtin.command:
+    cmd: "docker logs --tail {{ requested_log_lines }} {{ minio_container_name }}"
+  register: minio_docker_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['minio_targets']
+    - requested_log_service in ['all', 'minio']
+    - minio_deploy_mode == "docker"
+
+- name: Print MinIO Docker logs
+  ansible.builtin.debug:
+    msg: |
+      ===== MinIO ({{ inventory_hostname }}) =====
+      {{ minio_docker_logs.stdout | default(minio_docker_logs.stderr, true) | default('No logs found.', true) }}
+  when:
+    - minio_docker_logs is defined
+    - inventory_hostname in groups['minio_targets']
+    - requested_log_service in ['all', 'minio']
+    - minio_deploy_mode == "docker"
+
+- name: List MinIO Kubernetes pods
+  ansible.builtin.command:
+    cmd: "kubectl --kubeconfig {{ minio_kubeconfig_path }} -n {{ minio_namespace }} get pods -o name"
+  register: minio_k8s_pods
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['minio_targets']
+    - requested_log_service in ['all', 'minio']
+    - minio_deploy_mode == "k8s"
+
+- name: Show MinIO Kubernetes logs
+  ansible.builtin.command:
+    cmd: "kubectl --kubeconfig {{ minio_kubeconfig_path }} -n {{ minio_namespace }} logs --all-containers=true --tail={{ requested_log_lines }} {{ minio_k8s_pod }}"
+  loop: "{{ minio_k8s_pods.stdout_lines | default([]) }}"
+  loop_control:
+    loop_var: minio_k8s_pod
+  register: minio_k8s_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - inventory_hostname in groups['minio_targets']
+    - requested_log_service in ['all', 'minio']
+    - minio_deploy_mode == "k8s"
+
+- name: Print MinIO Kubernetes logs
+  ansible.builtin.debug:
+    msg: |
+      ===== MinIO ({{ inventory_hostname }}) {{ item.item }} =====
+      {{ item.stdout | default(item.stderr, true) | default('No logs found.', true) }}
+  loop: "{{ minio_k8s_logs.results | default([]) }}"
+  when:
+    - inventory_hostname in groups['minio_targets']
+    - requested_log_service in ['all', 'minio']
+    - minio_deploy_mode == "k8s"

@@ -47,11 +47,15 @@ spec:
             periodSeconds: 30
 {% if jenkins_use_pvc | bool %}
           volumeMounts:
+{% endif %}
+{% if jenkins_use_pvc | bool %}
             - name: jenkins-home
               mountPath: /var/jenkins_home
 {% endif %}
 {% if jenkins_use_pvc | bool %}
       volumes:
+{% endif %}
+{% if jenkins_use_pvc | bool %}
         - name: jenkins-home
           persistentVolumeClaim:
             claimName: {{ jenkins_pvc_name }}

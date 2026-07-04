@@ -1,0 +1,41 @@
+---
+- name: Set Harbor displayed URL
+  ansible.builtin.set_fact:
+    harbor_display_url: "{{ harbor_public_url }}"
+
+- name: Set Harbor displayed password
+  ansible.builtin.set_fact:
+    harbor_display_password: "{{ harbor_admin_password }} (first install only)"
+
+- name: Set Harbor registry endpoint
+  ansible.builtin.set_fact:
+    harbor_registry_endpoint: >-
+      {{
+        harbor_display_host
+        ~ (
+            ((harbor_display_port | int) in [80, 443])
+            | ternary('', ':' ~ (harbor_display_port | string))
+          )
+      }}
+
+- name: Set Harbor client note
+  ansible.builtin.set_fact:
+    harbor_client_note: >-
+      {{
+        (harbor_enable_tls | bool)
+        | ternary('', 'Docker clients need insecure registry mode for ' ~ harbor_registry_endpoint)
+      }}
+
+- name: Set Harbor firewall note
+  ansible.builtin.set_fact:
+    harbor_firewall_note: "Allow GCP firewall TCP {{ harbor_display_port }}"
+
+- name: Store Harbor login information
+  ansible.builtin.set_fact:
+    harbor_access_summary:
+      url: "{{ harbor_display_url }}"
+      username: "{{ harbor_admin_username }}"
+      password: "{{ harbor_display_password }}"
+      registry: "{{ harbor_registry_endpoint }}"
+      firewall: "{{ harbor_firewall_note }}"
+      note: "{{ harbor_client_note }}"

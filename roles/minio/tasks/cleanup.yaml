@@ -1,0 +1,8 @@
+---
+- name: Remove MinIO Docker resources
+  ansible.builtin.include_tasks: cleanup_docker.yaml
+  when: minio_deploy_mode == "docker"
+
+- name: Remove MinIO Kubernetes resources
+  ansible.builtin.include_tasks: cleanup_k8s.yaml
+  when: minio_deploy_mode == "k8s"

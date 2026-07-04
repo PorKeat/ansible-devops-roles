@@ -1,0 +1,45 @@
+---
+- name: Install Nginx packages
+  ansible.builtin.apt:
+    name: "{{ nginx_packages }}"
+    state: present
+    install_recommends: false
+
+- name: Check for Nginx main config
+  ansible.builtin.stat:
+    path: "{{ nginx_main_config_path }}"
+  register: nginx_main_config
+
+- name: Reinstall Nginx packages when config is missing
+  ansible.builtin.command:
+    cmd: "apt-get install --reinstall -y {{ nginx_packages | join(' ') }}"
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  changed_when: true
+  when: not nginx_main_config.stat.exists
+
+- name: Ensure required Nginx directories exist
+  ansible.builtin.file:
+    path: "{{ nginx_required_directory }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ nginx_required_directories }}"
+  loop_control:
+    loop_var: nginx_required_directory
+
+- name: Render main Nginx config
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_main_config_path }}"
+    mode: "0644"
+
+- name: Disable the default Nginx site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Ensure Nginx service is enabled and running
+  ansible.builtin.service:
+    name: nginx
+    enabled: true
+    state: started

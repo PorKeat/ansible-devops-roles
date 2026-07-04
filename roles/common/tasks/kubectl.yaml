@@ -1,0 +1,25 @@
+---
+- name: Add Kubernetes repository signing key
+  ansible.builtin.apt_key:
+    url: "{{ kubectl_apt_key_url }}"
+    state: present
+
+- name: Add Kubernetes apt repository
+  ansible.builtin.apt_repository:
+    repo: "{{ kubectl_apt_repo }}"
+    filename: kubernetes
+    state: present
+    update_cache: true
+
+- name: Install kubectl packages
+  ansible.builtin.apt:
+    name: "{{ kubectl_packages }}"
+    state: present
+    install_recommends: false
+
+- name: Install Python packages required by kubernetes.core
+  ansible.builtin.pip:
+    name: "{{ kubectl_python_packages }}"
+    executable: pip3
+    state: present
+    extra_args: --upgrade

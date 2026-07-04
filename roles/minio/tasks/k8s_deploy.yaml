@@ -1,0 +1,58 @@
+---
+- name: Read MinIO TLS certificate file for Kubernetes ingress
+  ansible.builtin.slurp:
+    src: "{{ minio_tls_certificate_path }}"
+  register: minio_tls_certificate_content
+  when:
+    - minio_enable_tls | bool
+    - minio_use_domain | default(true) | bool
+
+- name: Read MinIO TLS private key file for Kubernetes ingress
+  ansible.builtin.slurp:
+    src: "{{ minio_tls_private_key_path }}"
+  register: minio_tls_private_key_content
+  when:
+    - minio_enable_tls | bool
+    - minio_use_domain | default(true) | bool
+
+- name: Create MinIO Kubernetes TLS secret
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ minio_ingress_tls_secret_name }}"
+        namespace: "{{ minio_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ minio_tls_certificate_content.content | b64decode }}"
+        tls.key: "{{ minio_tls_private_key_content.content | b64decode }}"
+  when:
+    - minio_enable_tls | bool
+    - minio_use_domain | default(true) | bool
+
+- name: Create MinIO persistent volume claim
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'minio-pvc.yaml.j2') | from_yaml }}"
+  when: minio_use_pvc | bool
+
+- name: Create MinIO deployment
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'minio-deployment.yaml.j2') | from_yaml }}"
+  register: minio_k8s_deployment_apply
+
+- name: Create MinIO service
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'minio-service.yaml.j2') | from_yaml }}"

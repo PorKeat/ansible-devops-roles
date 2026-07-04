@@ -1,6 +1,17 @@
+{% if sonarqube_enable_tls | bool and (sonarqube_tls_active | default(false)) %}
 server {
     listen 80;
-    server_name {{ sonarqube_domain }};
+    server_name {{ (sonarqube_domain | default('') | length > 0) | ternary(sonarqube_domain, '_') }};
+
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name {{ (sonarqube_domain | default('') | length > 0) | ternary(sonarqube_domain, '_') }};
+
+    ssl_certificate /etc/letsencrypt/live/{{ sonarqube_domain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ sonarqube_domain }}/privkey.pem;
 
     access_log /var/log/nginx/sonarqube.access.log;
     error_log /var/log/nginx/sonarqube.error.log;
@@ -8,7 +19,27 @@ server {
     client_max_body_size 64m;
 
     location / {
-        proxy_pass http://127.0.0.1:{{ sonarqube_http_port }};
+        proxy_pass {{ sonarqube_nginx_upstream_url }};
+        proxy_http_version 1.1;
+        proxy_read_timeout 90s;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}
+{% else %}
+server {
+    listen 80;
+    server_name {{ (sonarqube_domain | default('') | length > 0) | ternary(sonarqube_domain, '_') }};
+
+    access_log /var/log/nginx/sonarqube.access.log;
+    error_log /var/log/nginx/sonarqube.error.log;
+
+    client_max_body_size 64m;
+
+    location / {
+        proxy_pass {{ sonarqube_nginx_upstream_url }};
         proxy_http_version 1.1;
         proxy_read_timeout 90s;
         proxy_set_header Host $host;
@@ -17,3 +48,4 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
+{% endif %}

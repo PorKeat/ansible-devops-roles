@@ -1,0 +1,6 @@
+---
+- name: Install Certbot packages
+  ansible.builtin.apt:
+    name: "{{ certbot_packages }}"
+    state: present
+    install_recommends: false

@@ -1,0 +1,56 @@
+---
+- name: Validate supported Harbor deployment mode
+  ansible.builtin.assert:
+    that:
+      - harbor_deploy_mode in ["docker", "k8s"]
+    fail_msg: "harbor_deploy_mode must be either 'docker' or 'k8s'."
+
+- name: Validate Harbor domain
+  ansible.builtin.assert:
+    that:
+      - (harbor_domain | default('')) | length > 0
+    fail_msg: "harbor_domain must be set when use_domain is true."
+  when:
+    - harbor_state == "present"
+    - harbor_use_domain | bool
+
+- name: Check Harbor TLS certificate file
+  ansible.builtin.stat:
+    path: "{{ harbor_tls_certificate_path }}"
+  register: harbor_tls_certificate_file
+  when:
+    - harbor_state == "present"
+    - harbor_enable_tls | bool
+
+- name: Validate Harbor node ports for Kubernetes IP mode
+  ansible.builtin.assert:
+    that:
+      - harbor_k8s_http_node_port | int >= 30000
+      - harbor_k8s_http_node_port | int <= 32767
+      - harbor_k8s_https_node_port | int >= 30000
+      - harbor_k8s_https_node_port | int <= 32767
+    fail_msg: "Harbor Kubernetes node ports must be in the 30000-32767 range."
+  when:
+    - harbor_state == "present"
+    - harbor_deploy_mode == "k8s"
+    - not harbor_use_domain | bool
+
+- name: Check Harbor TLS private key file
+  ansible.builtin.stat:
+    path: "{{ harbor_tls_private_key_path }}"
+  register: harbor_tls_private_key_file
+  when:
+    - harbor_state == "present"
+    - harbor_enable_tls | bool
+
+- name: Validate Harbor TLS certificate files
+  ansible.builtin.assert:
+    that:
+      - harbor_tls_certificate_file.stat.exists | default(false)
+      - harbor_tls_private_key_file.stat.exists | default(false)
+    fail_msg: >-
+      Harbor TLS expects existing certificate files on the server.
+      Put the certificate and private key at the configured paths, or turn TLS off.
+  when:
+    - harbor_state == "present"
+    - harbor_enable_tls | bool

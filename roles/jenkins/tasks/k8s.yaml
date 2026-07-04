@@ -1,0 +1,47 @@
+---
+- name: Create Jenkins namespace
+  ansible.builtin.include_tasks: k8s_namespace.yaml
+
+- name: Deploy Jenkins workload resources
+  ansible.builtin.include_tasks: k8s_deploy.yaml
+
+- name: Get Jenkins service details for Kubernetes IP mode
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ jenkins_kubeconfig_path }}"
+    validate_certs: "{{ jenkins_k8s_validate_certs }}"
+    api_version: v1
+    kind: Service
+    namespace: "{{ jenkins_namespace }}"
+    name: "{{ jenkins_service_name }}"
+  register: jenkins_service_info
+  when:
+    - not jenkins_use_domain | default(true) | bool
+    - install_nginx | default(false) | bool
+
+- name: Set Jenkins Nginx upstream for Kubernetes IP mode
+  ansible.builtin.set_fact:
+    jenkins_nginx_upstream_url: >-
+      http://{{ jenkins_service_info.resources[0].spec.clusterIP }}:{{ jenkins_http_port }}
+  when:
+    - not jenkins_use_domain | default(true) | bool
+    - install_nginx | default(false) | bool
+    - jenkins_service_info.resources | length > 0
+
+- name: Configure Nginx for Jenkins in Kubernetes IP mode
+  ansible.builtin.include_tasks: nginx.yaml
+  when:
+    - not jenkins_use_domain | default(true) | bool
+    - install_nginx | default(false) | bool
+
+- name: Reload Nginx for Jenkins in Kubernetes IP mode
+  ansible.builtin.meta: flush_handlers
+  when:
+    - not jenkins_use_domain | default(true) | bool
+    - install_nginx | default(false) | bool
+
+- name: Deploy Jenkins ingress resources
+  ansible.builtin.include_tasks: ingress.yaml
+  when: jenkins_use_domain | default(true) | bool
+
+- name: Show Jenkins access information
+  ansible.builtin.include_tasks: access.yaml

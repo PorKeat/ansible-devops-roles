@@ -1,0 +1,152 @@
+---
+- name: Set Vault displayed host
+  ansible.builtin.set_fact:
+    vault_display_host: >-
+      {{
+        (
+          vault_use_domain | bool
+          and (vault_domain | default('')) | length > 0
+        )
+        | ternary(vault_domain, ansible_host)
+      }}
+
+- name: Set Vault displayed scheme
+  ansible.builtin.set_fact:
+    vault_display_scheme: "{{ (vault_enable_tls | bool) | ternary('https', 'http') }}"
+
+- name: Set Vault public URL
+  ansible.builtin.set_fact:
+    vault_public_url: "{{ vault_display_scheme }}://{{ vault_display_host }}"
+
+- name: Set Vault cluster URL
+  ansible.builtin.set_fact:
+    vault_cluster_url: "{{ vault_display_scheme }}://{{ vault_display_host }}:{{ vault_cluster_port }}"
+
+- name: Create Vault installation directory
+  ansible.builtin.file:
+    path: "{{ vault_install_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Create Vault config directory
+  ansible.builtin.file:
+    path: "{{ vault_config_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Create Vault data directory
+  ansible.builtin.file:
+    path: "{{ vault_data_dir }}"
+    state: directory
+    owner: "{{ vault_uid | default('100') }}"
+    group: "{{ vault_gid | default('1000') }}"
+    mode: "0755"
+  when: vault_mode == "production"
+
+- name: Render Vault config file
+  ansible.builtin.template:
+    src: vault.hcl.j2
+    dest: "{{ vault_config_file }}"
+    mode: "0644"
+  when: vault_mode == "production"
+
+- name: Remove legacy Vault Compose file
+  ansible.builtin.file:
+    path: "{{ vault_install_dir }}/docker-compose.yml"
+    state: absent
+
+- name: Remove conflicting Vault compose.yaml file
+  ansible.builtin.file:
+    path: "{{ vault_install_dir }}/compose.yaml"
+    state: absent
+
+- name: Remove conflicting Vault compose.yml file
+  ansible.builtin.file:
+    path: "{{ vault_install_dir }}/compose.yml"
+    state: absent
+
+- name: Render Vault Docker Compose file
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: "{{ vault_compose_file }}"
+    mode: "0644"
+  register: vault_compose_template
+
+- name: Start Vault and wait for port
+  block:
+    - name: Remove pre-existing Vault container before compose start
+      ansible.builtin.command:
+        cmd: "docker rm -f {{ vault_container_name }}"
+      changed_when: true
+      failed_when: false
+
+    - name: Start Vault Docker Compose stack
+      community.docker.docker_compose_v2:
+        project_src: "{{ vault_install_dir }}"
+        files:
+          - "{{ vault_compose_file | basename }}"
+        project_name: "{{ vault_compose_project_name }}"
+        pull: missing
+        state: present
+        recreate: "{{ vault_compose_recreate }}"
+        remove_orphans: true
+
+    - name: Wait for Vault port to open
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ vault_http_port }}"
+        timeout: "{{ vault_port_wait_timeout }}"
+        delay: 0
+  rescue:
+    - name: Show Vault container state when startup fails
+      ansible.builtin.command:
+        cmd: "docker ps -a --filter name={{ vault_container_name }}"
+      register: vault_container_state
+      changed_when: false
+      failed_when: false
+
+    - name: Show Vault container logs when startup fails
+      ansible.builtin.command:
+        cmd: "docker logs --tail {{ vault_failure_log_lines }} {{ vault_container_name }}"
+      register: vault_container_logs
+      changed_when: false
+      failed_when: false
+
+    - name: Show Vault container port bindings when startup fails
+      ansible.builtin.command:
+        cmd: "docker inspect --format {{ '{{json .HostConfig.PortBindings}}' }} {{ vault_container_name }}"
+      register: vault_container_ports
+      changed_when: false
+      failed_when: false
+
+    - name: Show Vault compose file when startup fails
+      ansible.builtin.command:
+        cmd: "cat {{ vault_compose_file }}"
+      register: vault_compose_content
+      changed_when: false
+      failed_when: false
+
+    - name: Fail with Vault startup details
+      ansible.builtin.fail:
+        msg: >-
+          Vault did not start correctly.
+          Container state:
+          {{ vault_container_state.stdout | default('no container state available') }}
+
+          Port bindings:
+          {{ vault_container_ports.stdout | default('no port binding data available') }}
+
+          Compose file:
+          {{ vault_compose_content.stdout | default('no compose file available') }}
+
+          Logs:
+          {{ vault_container_logs.stdout | default(vault_container_logs.stderr | default('no logs available')) }}
+
+- name: Run Vault Setup
+  ansible.builtin.include_tasks: setup.yaml
+  when: vault_mode == "production"
+
+
+
+- name: Show Vault access information
+  ansible.builtin.include_tasks: access.yaml

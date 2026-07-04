@@ -1,0 +1,105 @@
+---
+- name: Validate Jenkins split host
+  ansible.builtin.assert:
+    that:
+      - (jenkins_ansible_host | default('')) | length > 0
+    fail_msg: "jenkins_ansible_host must be set when target_layout is split."
+  when: install_jenkins | bool
+
+- name: Validate SonarQube split host
+  ansible.builtin.assert:
+    that:
+      - (sonarqube_ansible_host | default('')) | length > 0
+    fail_msg: "sonarqube_ansible_host must be set when target_layout is split."
+  when: install_sonarqube | bool
+
+- name: Validate Harbor split host
+  ansible.builtin.assert:
+    that:
+      - (harbor_ansible_host | default('')) | length > 0
+    fail_msg: "harbor_ansible_host must be set when target_layout is split."
+  when: install_harbor | bool
+
+- name: Validate Vault split host
+  ansible.builtin.assert:
+    that:
+      - (vault_ansible_host | default('')) | length > 0
+    fail_msg: "vault_ansible_host must be set when target_layout is split."
+  when: install_vault | bool
+
+- name: Validate MinIO split host
+  ansible.builtin.assert:
+    that:
+      - (minio_ansible_host | default('')) | length > 0
+    fail_msg: "minio_ansible_host must be set when target_layout is split."
+  when: install_minio | bool
+
+- name: Add Jenkins split target
+  ansible.builtin.add_host:
+    name: jenkins-target
+    groups:
+      - common_targets
+      - jenkins_targets
+    ansible_connection: "{{ jenkins_ansible_connection | default(ansible_connection) }}"
+    ansible_host: "{{ jenkins_ansible_host }}"
+    ansible_user: "{{ jenkins_ansible_user | default(ansible_user) }}"
+    ansible_python_interpreter: "{{ jenkins_ansible_python_interpreter | default(ansible_python_interpreter) }}"
+    ansible_ssh_private_key_file: "{{ jenkins_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file | default(omit)) }}"
+    ansible_ssh_common_args: "{{ jenkins_ansible_ssh_common_args | default(ansible_ssh_common_args | default(omit)) }}"
+  when: install_jenkins | bool
+
+- name: Add SonarQube split target
+  ansible.builtin.add_host:
+    name: sonarqube-target
+    groups:
+      - common_targets
+      - sonarqube_targets
+    ansible_connection: "{{ sonarqube_ansible_connection | default(ansible_connection) }}"
+    ansible_host: "{{ sonarqube_ansible_host }}"
+    ansible_user: "{{ sonarqube_ansible_user | default(ansible_user) }}"
+    ansible_python_interpreter: "{{ sonarqube_ansible_python_interpreter | default(ansible_python_interpreter) }}"
+    ansible_ssh_private_key_file: "{{ sonarqube_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file | default(omit)) }}"
+    ansible_ssh_common_args: "{{ sonarqube_ansible_ssh_common_args | default(ansible_ssh_common_args | default(omit)) }}"
+  when: install_sonarqube | bool
+
+- name: Add Harbor split target
+  ansible.builtin.add_host:
+    name: harbor-target
+    groups:
+      - common_targets
+      - harbor_targets
+    ansible_connection: "{{ harbor_ansible_connection | default(ansible_connection) }}"
+    ansible_host: "{{ harbor_ansible_host }}"
+    ansible_user: "{{ harbor_ansible_user | default(ansible_user) }}"
+    ansible_python_interpreter: "{{ harbor_ansible_python_interpreter | default(ansible_python_interpreter) }}"
+    ansible_ssh_private_key_file: "{{ harbor_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file | default(omit)) }}"
+    ansible_ssh_common_args: "{{ harbor_ansible_ssh_common_args | default(ansible_ssh_common_args | default(omit)) }}"
+  when: install_harbor | bool
+
+- name: Add Vault split target
+  ansible.builtin.add_host:
+    name: vault-target
+    groups:
+      - common_targets
+      - vault_targets
+    ansible_connection: "{{ vault_ansible_connection | default(ansible_connection) }}"
+    ansible_host: "{{ vault_ansible_host }}"
+    ansible_user: "{{ vault_ansible_user | default(ansible_user) }}"
+    ansible_python_interpreter: "{{ vault_ansible_python_interpreter | default(ansible_python_interpreter) }}"
+    ansible_ssh_private_key_file: "{{ vault_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file | default(omit)) }}"
+    ansible_ssh_common_args: "{{ vault_ansible_ssh_common_args | default(ansible_ssh_common_args | default(omit)) }}"
+  when: install_vault | bool
+
+- name: Add MinIO split target
+  ansible.builtin.add_host:
+    name: minio-target
+    groups:
+      - common_targets
+      - minio_targets
+    ansible_connection: "{{ minio_ansible_connection | default(ansible_connection) }}"
+    ansible_host: "{{ minio_ansible_host }}"
+    ansible_user: "{{ minio_ansible_user | default(ansible_user) }}"
+    ansible_python_interpreter: "{{ minio_ansible_python_interpreter | default(ansible_python_interpreter) }}"
+    ansible_ssh_private_key_file: "{{ minio_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file | default(omit)) }}"
+    ansible_ssh_common_args: "{{ minio_ansible_ssh_common_args | default(ansible_ssh_common_args | default(omit)) }}"
+  when: install_minio | bool

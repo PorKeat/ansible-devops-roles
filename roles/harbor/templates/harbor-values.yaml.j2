@@ -1,0 +1,59 @@
+expose:
+  type: "{{ (harbor_use_domain | bool) | ternary('ingress', 'nodePort') }}"
+  tls:
+    enabled: {{ harbor_enable_tls | bool | to_json }}
+    certSource: "{{ (harbor_enable_tls | bool) | ternary('secret', 'none') }}"
+    secret:
+      secretName: "{{ harbor_ingress_tls_secret_name }}"
+  ingress:
+    className: "{{ harbor_ingress_class_name }}"
+    hosts:
+      core: "{{ harbor_domain | default('harbor.example.com') }}"
+  nodePort:
+    ports:
+      http:
+        port: 80
+        nodePort: {{ harbor_k8s_http_node_port | int }}
+      https:
+        port: 443
+        nodePort: {{ harbor_k8s_https_node_port | int }}
+
+externalURL: "{{ harbor_public_url }}"
+harborAdminPassword: "{{ harbor_admin_password }}"
+
+database:
+  internal:
+    password: "{{ harbor_database_password }}"
+
+trivy:
+  enabled: {{ harbor_trivy_enabled | bool | to_json }}
+
+persistence:
+  enabled: true
+  persistentVolumeClaim:
+    registry:
+      size: "{{ harbor_registry_storage_size }}"
+{% if (harbor_k8s_storage_class | default('')) | length > 0 %}
+      storageClass: "{{ harbor_k8s_storage_class }}"
+{% endif %}
+    jobservice:
+      jobLog:
+        size: "{{ harbor_jobservice_storage_size }}"
+{% if (harbor_k8s_storage_class | default('')) | length > 0 %}
+        storageClass: "{{ harbor_k8s_storage_class }}"
+{% endif %}
+    database:
+      size: "{{ harbor_database_storage_size }}"
+{% if (harbor_k8s_storage_class | default('')) | length > 0 %}
+      storageClass: "{{ harbor_k8s_storage_class }}"
+{% endif %}
+    redis:
+      size: "{{ harbor_redis_storage_size }}"
+{% if (harbor_k8s_storage_class | default('')) | length > 0 %}
+      storageClass: "{{ harbor_k8s_storage_class }}"
+{% endif %}
+    trivy:
+      size: "{{ harbor_trivy_storage_size }}"
+{% if (harbor_k8s_storage_class | default('')) | length > 0 %}
+      storageClass: "{{ harbor_k8s_storage_class }}"
+{% endif %}

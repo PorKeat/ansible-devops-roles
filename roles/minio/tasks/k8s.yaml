@@ -1,0 +1,13 @@
+---
+- name: Create MinIO namespace
+  ansible.builtin.include_tasks: k8s_namespace.yaml
+
+- name: Deploy MinIO workload resources
+  ansible.builtin.include_tasks: k8s_deploy.yaml
+
+- name: Deploy MinIO ingress resources
+  ansible.builtin.include_tasks: ingress.yaml
+  when: minio_use_domain | default(true) | bool
+
+- name: Show MinIO access information
+  ansible.builtin.include_tasks: access.yaml

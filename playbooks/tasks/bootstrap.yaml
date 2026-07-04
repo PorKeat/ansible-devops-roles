@@ -1,0 +1,20 @@
+---
+- name: Validate target layout
+  ansible.builtin.assert:
+    that:
+      - target_layout in ["single", "split"]
+    fail_msg: "target_layout must be either 'single' or 'split'."
+
+- name: Validate enabled services
+  ansible.builtin.assert:
+    that:
+      - install_jenkins | bool or install_sonarqube | bool or install_harbor | bool or install_vault | bool or install_minio | bool
+    fail_msg: "At least one service must be enabled."
+
+- name: Build single-target inventory
+  ansible.builtin.include_tasks: bootstrap_single.yaml
+  when: target_layout == "single"
+
+- name: Build split-target inventory
+  ansible.builtin.include_tasks: bootstrap_split.yaml
+  when: target_layout == "split"

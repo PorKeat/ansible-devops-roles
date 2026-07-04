@@ -4,13 +4,16 @@ metadata:
   name: {{ jenkins_service_name }}
   namespace: {{ jenkins_namespace }}
 spec:
-  type: {{ jenkins_service_type }}
+  type: {{ ((jenkins_deploy_mode == 'k8s') and not (jenkins_use_domain | default(true) | bool)) | ternary('NodePort', jenkins_service_type) }}
   selector:
     app: jenkins
   ports:
     - name: http
       port: {{ jenkins_http_port }}
       targetPort: http
+{% if jenkins_deploy_mode == 'k8s' and not (jenkins_use_domain | default(true) | bool) %}
+      nodePort: {{ jenkins_k8s_node_port | int }}
+{% endif %}
     - name: agent
       port: {{ jenkins_agent_port }}
       targetPort: agent

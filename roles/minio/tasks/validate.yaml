@@ -1,0 +1,82 @@
+---
+- name: Validate supported MinIO deployment mode
+  ansible.builtin.assert:
+    that:
+      - minio_deploy_mode in ["docker", "k8s"]
+    fail_msg: "minio_deploy_mode must be either 'docker' or 'k8s'."
+
+- name: Validate MinIO domain
+  ansible.builtin.assert:
+    that:
+      - (minio_api_domain | default('')) | length > 0
+      - (minio_console_domain | default('')) | length > 0
+      - minio_api_domain != minio_console_domain
+    fail_msg: "minio_api_domain and minio_console_domain must both be set and must be different when use_domain is true."
+  when: minio_use_domain | default(true) | bool
+
+- name: Validate MinIO root credentials
+  ansible.builtin.assert:
+    that:
+      - (minio_root_user | string | length) > 0
+      - (minio_root_password | string | length) >= 8
+    fail_msg: "minio_root_user must be set and minio_root_password must be at least 8 characters."
+
+
+- name: Validate TLS email when MinIO Docker TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - minio_tls_email | length > 0
+    fail_msg: "minio_tls_email must be set when minio_enable_tls is true in Docker mode."
+  when:
+    - minio_deploy_mode == "docker"
+    - minio_enable_tls | bool
+
+- name: Validate TLS secret name when MinIO Kubernetes TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - minio_ingress_tls_secret_name | length > 0
+    fail_msg: "minio_ingress_tls_secret_name must be set when minio_enable_tls is true in Kubernetes mode."
+  when:
+    - minio_deploy_mode == "k8s"
+    - minio_enable_tls | bool
+
+- name: Check MinIO TLS certificate file
+  ansible.builtin.stat:
+    path: "{{ minio_tls_certificate_path }}"
+  register: minio_tls_certificate_file
+  when:
+    - minio_deploy_mode == "k8s"
+    - minio_enable_tls | bool
+    - minio_use_domain | default(true) | bool
+
+- name: Check MinIO TLS private key file
+  ansible.builtin.stat:
+    path: "{{ minio_tls_private_key_path }}"
+  register: minio_tls_private_key_file
+  when:
+    - minio_deploy_mode == "k8s"
+    - minio_enable_tls | bool
+    - minio_use_domain | default(true) | bool
+
+- name: Validate MinIO TLS certificate files
+  ansible.builtin.assert:
+    that:
+      - minio_tls_certificate_file.stat.exists | default(false)
+      - minio_tls_private_key_file.stat.exists | default(false)
+    fail_msg: "MinIO TLS certificate files were not found at the configured paths."
+  when:
+    - minio_deploy_mode == "k8s"
+    - minio_enable_tls | bool
+    - minio_use_domain | default(true) | bool
+
+- name: Validate MinIO node ports for Kubernetes mode
+  ansible.builtin.assert:
+    that:
+      - minio_k8s_api_node_port | int >= 30000
+      - minio_k8s_api_node_port | int <= 32767
+      - minio_k8s_console_node_port | int >= 30000
+      - minio_k8s_console_node_port | int <= 32767
+    fail_msg: "MinIO Kubernetes node ports must be in the 30000-32767 range."
+  when:
+    - minio_deploy_mode == "k8s"
+    - not minio_use_domain | default(true) | bool

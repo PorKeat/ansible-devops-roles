@@ -1,0 +1,53 @@
+global:
+  enabled: true
+  tlsDisable: true
+
+injector:
+  enabled: false
+
+server:
+  image:
+    tag: "{{ vault_version }}"
+  dev:
+    enabled: {{ (vault_mode == 'testing') | to_json }}
+    devRootToken: "{{ vault_root_token }}"
+  standalone:
+    enabled: {{ (vault_mode == 'production') | to_json }}
+    config: |
+      ui = true
+
+      listener "tcp" {
+        tls_disable = 1
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+
+      storage "file" {
+        path = "/vault/data"
+      }
+  dataStorage:
+    enabled: {{ (vault_mode == 'production') | to_json }}
+    size: "{{ vault_storage_size }}"
+{% if (vault_k8s_storage_class | default('')) | length > 0 %}
+    storageClass: "{{ vault_k8s_storage_class }}"
+{% endif %}
+  ingress:
+    enabled: {{ vault_use_domain | bool | to_json }}
+    ingressClassName: "{{ vault_ingress_class_name }}"
+    hosts:
+      - host: "{{ vault_domain | default('vault.example.com') }}"
+        paths:
+          - /
+{% if vault_enable_tls | bool %}
+    tls:
+      - secretName: "{{ vault_k8s_ingress_tls_secret_name }}"
+        hosts:
+          - "{{ vault_domain }}"
+{% endif %}
+
+ui:
+  enabled: true
+  serviceType: "{{ (vault_use_domain | bool) | ternary('ClusterIP', 'NodePort') }}"
+{% if not vault_use_domain | bool %}
+  serviceNodePort: {{ vault_k8s_node_port | int }}
+{% endif %}

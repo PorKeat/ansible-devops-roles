@@ -1,0 +1,61 @@
+---
+- name: Create SonarQube namespace
+  ansible.builtin.include_tasks: k8s_namespace.yaml
+
+- name: Deploy SonarQube workload resources
+  ansible.builtin.include_tasks: k8s_deploy.yaml
+
+- name: Get SonarQube service details for Kubernetes IP mode
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    api_version: v1
+    kind: Service
+    namespace: "{{ sonarqube_namespace }}"
+    name: "{{ sonarqube_service_name }}"
+  register: sonarqube_service_info
+  when:
+    - not sonarqube_use_domain | default(true) | bool
+    - install_nginx | default(false) | bool
+
+- name: Set SonarQube Nginx upstream for Kubernetes IP mode
+  ansible.builtin.set_fact:
+    sonarqube_nginx_upstream_url: >-
+      http://{{ sonarqube_service_info.resources[0].spec.clusterIP }}:{{ sonarqube_http_port }}
+  when:
+    - not sonarqube_use_domain | default(true) | bool
+    - install_nginx | default(false) | bool
+    - sonarqube_service_info.resources | length > 0
+
+- name: Configure Nginx for SonarQube in Kubernetes IP mode
+  ansible.builtin.include_tasks: nginx.yaml
+  when:
+    - not sonarqube_use_domain | default(true) | bool
+    - install_nginx | default(false) | bool
+
+- name: Reload Nginx for SonarQube in Kubernetes IP mode
+  ansible.builtin.meta: flush_handlers
+  when:
+    - not sonarqube_use_domain | default(true) | bool
+    - install_nginx | default(false) | bool
+
+- name: Remove SonarQube ingress in Kubernetes IP mode
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: absent
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: "{{ sonarqube_ingress_name }}"
+        namespace: "{{ sonarqube_namespace }}"
+  when:
+    - not sonarqube_use_domain | default(true) | bool
+
+- name: Deploy SonarQube ingress resources
+  ansible.builtin.include_tasks: ingress.yaml
+  when: sonarqube_use_domain | default(true) | bool
+
+- name: Show SonarQube access information
+  ansible.builtin.include_tasks: access.yaml

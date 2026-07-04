@@ -1,0 +1,38 @@
+services:
+  vault:
+    image: {{ vault_image }}
+    container_name: {{ vault_container_name }}
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - traefik_proxy
+    command:
+{% if vault_mode == 'testing' %}
+      - server
+      - -dev
+      - -dev-listen-address=0.0.0.0:8200
+      - -dev-root-token-id={{ vault_root_token }}
+{% else %}
+      - server
+{% endif %}
+    ports:
+      - "127.0.0.1:{{ vault_http_port }}:8200"
+{% if vault_mode == 'production' %}
+    volumes:
+      - "{{ vault_config_dir }}:/vault/config"
+      - "{{ vault_data_dir }}:/vault/data"
+{% endif %}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vault.rule=Host(`{{ vault_domain }}`)"
+      - "traefik.http.routers.vault.entrypoints=websecure"
+{% if enable_tls | default(true) | bool %}
+      - "traefik.http.routers.vault.tls.certresolver=myresolver"
+{% endif %}
+      - "traefik.http.routers.vault.middlewares=security-headers@file"
+      - "traefik.http.services.vault.loadbalancer.server.port=8200"
+
+networks:
+  traefik_proxy:
+    external: true

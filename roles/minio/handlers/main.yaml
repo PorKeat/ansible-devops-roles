@@ -1,0 +1,5 @@
+---
+- name: restart nginx for minio
+  ansible.builtin.service:
+    name: nginx
+    state: restarted

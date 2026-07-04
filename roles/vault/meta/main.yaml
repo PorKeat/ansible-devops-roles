@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  role_name: vault
+  author: alexkgm
+  description: Deploy HashiCorp Vault in Docker testing or production mode.
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - vault
+    - hashicorp
+    - secrets
+    - docker
+dependencies: []

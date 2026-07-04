@@ -1,0 +1,61 @@
+---
+harbor_state: present
+harbor_deploy_mode: docker
+harbor_enable_tls: false
+harbor_use_domain: true
+harbor_domain: ""
+harbor_namespace: harbor
+harbor_install_dir: /opt/harbor
+harbor_version: 2.14.1
+harbor_http_port: 8081
+harbor_https_port: 8443
+harbor_admin_username: admin
+harbor_admin_password: Harbor12345
+harbor_database_password: root123
+harbor_database_max_idle_conns: 100
+harbor_database_max_open_conns: 900
+harbor_database_conn_max_lifetime: 5m
+harbor_data_dir: "{{ harbor_install_dir }}/data"
+harbor_log_dir: "{{ harbor_install_dir }}/log"
+harbor_trivy_enabled: false
+harbor_port_wait_timeout: 30
+harbor_jobservice_max_job_workers: 10
+harbor_jobservice_job_loggers:
+  - FILE
+harbor_jobservice_logger_sweeper_duration: 1
+harbor_notification_webhook_job_max_retry: 10
+harbor_notification_webhook_job_http_client_timeout: 3
+harbor_chart_absolute_url: disabled
+harbor_log_level: info
+harbor_log_rotate_count: 50
+harbor_log_rotate_size: 200M
+
+harbor_install_dir_parent: "{{ harbor_install_dir | dirname }}"
+harbor_install_script_path: "{{ harbor_install_dir }}/install.sh"
+harbor_compose_file: "{{ harbor_install_dir }}/docker-compose.yml"
+harbor_version_file: "{{ harbor_install_dir }}/.codex-harbor-version"
+harbor_trivy_state_file: "{{ harbor_install_dir }}/.codex-harbor-trivy-enabled"
+harbor_installer_archive: "/tmp/harbor-online-installer-v{{ harbor_version }}.tgz"
+harbor_installer_url: "https://github.com/goharbor/harbor/releases/download/v{{ harbor_version }}/harbor-online-installer-v{{ harbor_version }}.tgz"
+harbor_tls_certificate_path: "/etc/letsencrypt/live/{{ harbor_domain }}/fullchain.pem"
+harbor_tls_private_key_path: "/etc/letsencrypt/live/{{ harbor_domain }}/privkey.pem"
+harbor_cleanup_remove_data: true
+harbor_cleanup_remove_docker_volumes: true
+harbor_cleanup_remove_namespace: true
+harbor_kubeconfig_path: "/home/{{ ansible_user | default('ubuntu') }}/.kube/config"
+harbor_k8s_validate_certs: true
+harbor_helm_repo_name: harbor
+harbor_helm_repo_url: https://helm.goharbor.io
+harbor_chart_ref: harbor/harbor
+harbor_chart_version: ""
+harbor_release_name: harbor
+harbor_ingress_class_name: nginx
+harbor_ingress_tls_secret_name: harbor-tls
+harbor_k8s_http_node_port: 30081
+harbor_k8s_https_node_port: 30443
+harbor_k8s_storage_class: ""
+harbor_registry_storage_size: 20Gi
+harbor_jobservice_storage_size: 5Gi
+harbor_database_storage_size: 5Gi
+harbor_redis_storage_size: 5Gi
+harbor_trivy_storage_size: 10Gi

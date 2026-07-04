@@ -1,0 +1,39 @@
+hostname: {{ harbor_display_host }}
+
+http:
+  port: {{ harbor_http_port }}
+
+
+external_url: {{ harbor_public_url }}
+
+harbor_admin_password: {{ harbor_admin_password }}
+
+database:
+  password: {{ harbor_database_password }}
+  max_idle_conns: {{ harbor_database_max_idle_conns }}
+  max_open_conns: {{ harbor_database_max_open_conns }}
+  conn_max_lifetime: {{ harbor_database_conn_max_lifetime }}
+
+jobservice:
+  max_job_workers: {{ harbor_jobservice_max_job_workers }}
+  job_loggers:
+{% for harbor_job_logger in harbor_jobservice_job_loggers %}
+    - {{ harbor_job_logger }}
+{% endfor %}
+  logger_sweeper_duration: {{ harbor_jobservice_logger_sweeper_duration }} #days
+
+data_volume: {{ harbor_data_dir }}
+
+notification:
+  webhook_job_max_retry: {{ harbor_notification_webhook_job_max_retry }}
+  webhook_job_http_client_timeout: {{ harbor_notification_webhook_job_http_client_timeout }} #seconds
+
+chart:
+  absolute_url: {{ harbor_chart_absolute_url }}
+
+log:
+  level: {{ harbor_log_level }}
+  local:
+    rotate_count: {{ harbor_log_rotate_count }}
+    rotate_size: {{ harbor_log_rotate_size }}
+    location: {{ harbor_log_dir }}

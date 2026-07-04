@@ -1,5 +1,0 @@
----
-- name: restart nginx for sonarqube
-  ansible.builtin.service:
-    name: nginx
-    state: restarted

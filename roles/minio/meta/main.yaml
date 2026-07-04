@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  role_name: minio
+  author: alexkgm
+  description: Deploy MinIO with Docker Compose or Kubernetes.
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - minio
+    - s3
+    - objectstorage
+    - docker
+    - kubernetes
+dependencies: []

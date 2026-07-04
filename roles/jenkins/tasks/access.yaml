@@ -1,0 +1,146 @@
+---
+- name: Wait for Jenkins initial password file in Docker mode
+  ansible.builtin.wait_for:
+    path: "{{ jenkins_data_dir }}/secrets/initialAdminPassword"
+    timeout: "{{ jenkins_password_file_wait_timeout }}"
+    delay: 0
+  when: jenkins_deploy_mode == "docker"
+
+- name: Give fresh Jenkins pods time to boot before readiness checks
+  ansible.builtin.pause:
+    seconds: "{{ jenkins_initial_boot_wait }}"
+  when:
+    - jenkins_deploy_mode == "k8s"
+    - jenkins_k8s_deployment_apply is defined
+    - jenkins_k8s_deployment_apply.changed
+
+- name: Wait for Jenkins pod to be running in Kubernetes mode
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ jenkins_kubeconfig_path }}"
+    validate_certs: "{{ jenkins_k8s_validate_certs }}"
+    api_version: v1
+    kind: Pod
+    namespace: "{{ jenkins_namespace }}"
+    label_selectors:
+      - app=jenkins
+  register: jenkins_pod_info
+  retries: "{{ jenkins_readiness_retries }}"
+  delay: "{{ jenkins_readiness_delay }}"
+  until:
+    - jenkins_pod_info.resources | length > 0
+    - jenkins_pod_info.resources[0].status.phase == "Running"
+    - >
+      (
+        jenkins_pod_info.resources[0].status.conditions | default([])
+        | selectattr('type', 'equalto', 'Ready')
+        | selectattr('status', 'equalto', 'True')
+        | list
+        | length
+      ) > 0
+  when: jenkins_deploy_mode == "k8s"
+
+- name: Read Jenkins initial admin password from Docker deployment
+  ansible.builtin.slurp:
+    path: "{{ jenkins_data_dir }}/secrets/initialAdminPassword"
+  register: jenkins_initial_password_file
+  when: jenkins_deploy_mode == "docker"
+
+- name: Read Jenkins initial admin password from Kubernetes deployment
+  kubernetes.core.k8s_exec:
+    kubeconfig: "{{ jenkins_kubeconfig_path }}"
+    validate_certs: "{{ jenkins_k8s_validate_certs }}"
+    namespace: "{{ jenkins_namespace }}"
+    pod: "{{ jenkins_pod_info.resources[0].metadata.name }}"
+    command: cat /var/jenkins_home/secrets/initialAdminPassword
+  register: jenkins_initial_password_exec
+  when: jenkins_deploy_mode == "k8s"
+
+- name: Set Jenkins displayed username
+  ansible.builtin.set_fact:
+    jenkins_display_username: admin
+
+- name: Set Jenkins displayed password
+  ansible.builtin.set_fact:
+    jenkins_display_password: >-
+      {{
+        (
+          jenkins_deploy_mode == 'docker'
+        )
+        | ternary(
+            jenkins_initial_password_file.content | b64decode | trim,
+            jenkins_initial_password_exec.stdout | trim
+          )
+      }}
+
+- name: Check whether Jenkins TLS certificate exists
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ jenkins_domain }}/fullchain.pem"
+  register: jenkins_tls_certificate
+  when:
+    - jenkins_deploy_mode == "docker"
+    - (jenkins_domain | default('')) | length > 0
+
+- name: Set Jenkins displayed host
+  ansible.builtin.set_fact:
+    jenkins_display_host: >-
+      {{
+        (
+          jenkins_use_domain | default(true) | bool
+          and (jenkins_domain | default('')) | length > 0
+        )
+        | ternary(jenkins_domain, ansible_host)
+      }}
+
+- name: Set Jenkins displayed port
+  ansible.builtin.set_fact:
+    jenkins_display_port: >-
+      {{
+        (
+          jenkins_deploy_mode == 'k8s'
+          and not (jenkins_use_domain | default(true) | bool)
+          and (install_nginx | default(false) | bool)
+        )
+        | ternary(
+            80,
+            (
+              (
+                jenkins_deploy_mode == 'k8s'
+                and not (jenkins_use_domain | default(true) | bool)
+              )
+              | ternary(jenkins_k8s_node_port, ((jenkins_enable_tls | bool) | ternary(443, 80)))
+            )
+          )
+      }}
+
+- name: Set Jenkins displayed URL
+  ansible.builtin.set_fact:
+    jenkins_display_url: >-
+      {{
+        (
+          (
+            (
+              jenkins_deploy_mode == 'k8s'
+              and jenkins_enable_tls | bool
+            )
+            or
+            (
+              jenkins_deploy_mode == 'docker'
+              and jenkins_enable_tls | bool
+              and (jenkins_tls_certificate.stat.exists | default(false))
+            )
+          )
+          | ternary('https://', 'http://')
+        )
+        ~ jenkins_display_host
+        ~ (
+            ((jenkins_display_port | int) in [80, 443])
+            | ternary('', ':' ~ (jenkins_display_port | string))
+          )
+      }}
+
+- name: Store Jenkins login information
+  ansible.builtin.set_fact:
+    jenkins_access_summary:
+      url: "{{ jenkins_display_url }}"
+      username: "{{ jenkins_display_username }}"
+      password: "{{ jenkins_display_password }}"

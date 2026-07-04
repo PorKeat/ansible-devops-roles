@@ -1,343 +1,218 @@
 # DevOps Ansible Roles
 
-One Git repository with many reusable Ansible roles:
+Deploy Jenkins, SonarQube, Harbor, and HashiCorp Vault from one repo.
 
-- `common`
-- `jenkins`
-- `sonarqube`
+Edit only:
 
-This repo supports:
+- `config.yaml`
 
-- local project usage from this root
-- collection-style usage from one Git repo
-- running all roles or only the role you want
-
-The repo does not create DNS records and does not use any DNS provider API. Domain names are always set manually by you.
-
-## What this repo is for
-
-Use this repo if you want:
-
-- one place to keep many DevOps roles
-- one repo to install and reuse
-- the choice to run only `jenkins`, only `sonarqube`, or all roles together
-
-## Roles in this repo
-
-- [`roles/common`](/Users/alexkgm/ansible-role/roles/common)
-- [`roles/jenkins`](/Users/alexkgm/ansible-role/roles/jenkins)
-- [`roles/sonarqube`](/Users/alexkgm/ansible-role/roles/sonarqube)
-
-Role docs:
-
-- [`roles/common/README.md`](/Users/alexkgm/ansible-role/roles/common/README.md)
-- [`roles/jenkins/README.md`](/Users/alexkgm/ansible-role/roles/jenkins/README.md)
-- [`roles/sonarqube/README.md`](/Users/alexkgm/ansible-role/roles/sonarqube/README.md)
-
-## Best practice for one repo with many roles
-
-If you keep many roles in one Git repo, the best practice is to package the repo as one Ansible Collection.
-
-This repo already includes [`galaxy.yml`](/Users/alexkgm/ansible-role/galaxy.yml), so you can use it like this:
-
-- install the repo once
-- call only the role you want in the playbook
-
-Example collection roles:
-
-- `cambostack.devops.common`
-- `cambostack.devops.jenkins`
-- `cambostack.devops.sonarqube`
-
-Important:
-
-- collection install gets the whole repo
-- but your playbook can still use only one role
-- if you truly want to download only one role, use a separate repo for that role
-
-## How to use this root repo
-
-You have 2 normal ways to use it.
-
-### Option 1. Use this repo locally from root
-
-This is best when you clone the repo and want the full project structure already prepared.
-
-Files already included:
-
-- [`config.yml`](/Users/alexkgm/ansible-role/config.yml)
-- [`inventory.ini`](/Users/alexkgm/ansible-role/inventory.ini)
-- [`site.yml`](/Users/alexkgm/ansible-role/site.yml)
-- [`group_vars/all.yml`](/Users/alexkgm/ansible-role/group_vars/all.yml)
-- [`collections/requirements.yml`](/Users/alexkgm/ansible-role/collections/requirements.yml)
-- [`Justfile`](/Users/alexkgm/ansible-role/Justfile)
-
-Steps:
-
-1. Edit [`config.yml`](/Users/alexkgm/ansible-role/config.yml).
-2. Leave [`inventory.ini`](/Users/alexkgm/ansible-role/inventory.ini) as-is unless you want to change the host name.
-3. Install collections.
-4. Run the playbook.
-
-Install:
-
-```bash
-ansible-galaxy collection install -r collections/requirements.yml
-```
-
-Or:
+## Quick Start
 
 ```bash
 just init
-```
-
-Run:
-
-```bash
-ansible-playbook -i inventory.ini site.yml --syntax-check
-ansible-playbook -i inventory.ini site.yml
-```
-
-Or:
-
-```bash
 just syntax
 just run
 ```
 
-### Option 2. Install this repo as one collection
+## Tools
 
-This is best when you want one Git repo for many roles and want to choose roles in the playbook.
-
-Install:
-
-```bash
-ansible-galaxy collection install git+https://github.com/your-org/cambostack-devops-collection.git
+```yaml
+jenkins: true
+sonarqube: false
+harbor: false
+hashicorp_vault: false
 ```
 
-Then use only the role you want.
+- `jenkins`: install or remove Jenkins
+- `sonarqube`: install or remove SonarQube
+- `harbor`: install or remove Harbor
+- `hashicorp_vault`: install or remove HashiCorp Vault
+
+## Basic Config
+
+```yaml
+target_layout: single
+
+ansible_connection: ssh
+ansible_host: 34.87.60.237
+ansible_user: ubuntu
+ansible_python_interpreter: /usr/bin/python3
+
+deployment_state: present
+global_deploy_mode: docker
+use_domain: false
+```
+
+- `global_deploy_mode: kubernetes` works with normal Kubernetes or k3s if your kubeconfig points there
+
+SSH first connect or host key prompts:
+
+```yaml
+ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
+```
+
+If the server was rebuilt and you already trusted the old key, remove the stale entry first:
+
+```bash
+ssh-keygen -R 34.142.227.94
+```
+
+## Common Examples
 
 Jenkins only:
 
 ```yaml
----
-- hosts: devops
-  become: true
-  roles:
-    - cambostack.devops.jenkins
+jenkins: true
+sonarqube: false
+harbor: false
+hashicorp_vault: false
 ```
 
 SonarQube only:
 
 ```yaml
----
-- hosts: devops
-  become: true
-  roles:
-    - cambostack.devops.sonarqube
+jenkins: false
+sonarqube: true
+harbor: false
+hashicorp_vault: false
 ```
 
-All roles:
+SonarQube on Kubernetes:
 
 ```yaml
----
-- hosts: devops
-  become: true
-  roles:
-    - cambostack.devops.common
-    - cambostack.devops.jenkins
-    - cambostack.devops.sonarqube
+sonarqube: true
+global_deploy_mode: kubernetes
+use_domain: false
 ```
 
-## Where to change settings
-
-### If you use this root project
-
-Change values in:
-
-- [`config.yml`](/Users/alexkgm/ansible-role/config.yml)
-
-This is the main root-level configuration file.
-[`group_vars/all.yml`](/Users/alexkgm/ansible-role/group_vars/all.yml) is only the internal mapping file.
-
-### If you use one role by itself
-
-You can change values in:
-
-- the role's `defaults/main.yml`
-- playbook `vars`
-- inventory vars
-- `group_vars`
-- `host_vars`
-
-For role-local settings:
-
-- [`roles/jenkins/defaults/main.yml`](/Users/alexkgm/ansible-role/roles/jenkins/defaults/main.yml)
-- [`roles/sonarqube/defaults/main.yml`](/Users/alexkgm/ansible-role/roles/sonarqube/defaults/main.yml)
-
-## Root project examples
-
-### Run all roles from this root
-
-[`site.yml`](/Users/alexkgm/ansible-role/site.yml) already does this:
+MinIO only:
 
 ```yaml
----
-- name: Deploy Jenkins and SonarQube
-  hosts: devops
-  become: true
-  vars_files:
-    - config.yml
-  roles:
-    - common
-    - jenkins
-    - sonarqube
+jenkins: false
+sonarqube: false
+harbor: false
+hashicorp_vault: false
+minio: true
 ```
 
-### Run only Jenkins from this root
-
-Use a playbook like:
+Harbor only:
 
 ```yaml
----
-- hosts: devops
-  become: true
-  roles:
-    - common
-    - jenkins
+jenkins: false
+sonarqube: false
+harbor: true
+hashicorp_vault: false
 ```
 
-### Run only SonarQube from this root
-
-Use a playbook like:
+Vault only:
 
 ```yaml
----
-- hosts: devops
-  become: true
-  roles:
-    - common
-    - sonarqube
+jenkins: false
+sonarqube: false
+harbor: false
+hashicorp_vault: true
+vault_mode: testing
 ```
 
-## Main root variables
-
-The root project uses these important variables in [`config.yml`](/Users/alexkgm/ansible-role/config.yml):
-
-- `ansible_host`
-- `ansible_user`
-- `global_deploy_mode`
-- `enable_tls`
-- `tls_email`
-- `jenkins_domain`
-- `sonarqube_domain`
-- optional Jenkins overrides such as `jenkins_namespace`, `jenkins_storage_size`, and `jenkins_image`
-- optional SonarQube overrides such as `sonarqube_namespace`, `sonarqube_storage_size`, `postgres_storage_size`, `sonarqube_image`, and `postgres_image`
-
-This repo is set up so you can change everything in one place: [`config.yml`](/Users/alexkgm/ansible-role/config.yml). The shared values there are mapped into the roles automatically by [`group_vars/all.yml`](/Users/alexkgm/ansible-role/group_vars/all.yml).
-
-## Manual domains and HTTPS
-
-Set domains manually, for example:
+Harbor on Kubernetes:
 
 ```yaml
-jenkins_domain: jenkins.cambostack.codes
-sonarqube_domain: sonar.cambostack.codes
+harbor: true
+global_deploy_mode: kubernetes
+use_domain: false
 ```
 
-These domains are used only in:
-
-- Nginx configs
-- Certbot commands
-- Kubernetes Ingress manifests
-
-HTTPS support:
-
-- Docker mode: Nginx + Certbot
-- Kubernetes mode: Ingress TLS block
-
-You must configure DNS outside Ansible.
-
-## When to use root project vs one role
-
-Use the root project when:
-
-- you want everything ready now
-- you want one inventory and one main config file
-- you want to deploy Jenkins and SonarQube together
-
-Use one role when:
-
-- you only need Jenkins
-- you only need SonarQube
-- you want the role in another project
-
-## If you do not want all roles downloaded
-
-If many roles live in one Git repo:
-
-- collection install will install the whole repo
-- you can still run only one role
-
-If you do not want to download all roles:
-
-- publish that role to its own Git repo
-- install only that role
-
-Example:
+Vault on Kubernetes:
 
 ```yaml
----
-roles:
-  - name: jenkins
-    src: https://github.com/your-org/ansible-role-jenkins.git
-    scm: git
-    version: main
+hashicorp_vault: true
+global_deploy_mode: kubernetes
+vault_mode: production
 ```
 
-## Useful commands
+MinIO on Kubernetes:
 
-Collections:
+```yaml
+minio: true
+global_deploy_mode: kubernetes
+use_domain: false
+```
+
+## IP Or Domain
+
+IP-only testing:
+
+```yaml
+use_domain: false
+```
+
+Domain later:
+
+```yaml
+use_domain: true
+enable_tls: false
+jenkins_domain: jenkins.example.com
+sonarqube_domain: sonar.example.com
+harbor_domain: harbor.example.com
+vault_domain: vault.example.com
+minio_api_domain: minio-api.example.com
+minio_console_domain: minio-console.example.com
+```
+
+HTTPS later:
+
+```yaml
+use_domain: true
+enable_tls: true
+tls_email: you@example.com
+```
+
+Then run:
 
 ```bash
-ansible-galaxy collection install -r collections/requirements.yml
+just domain
 ```
 
-Syntax check:
-
-```bash
-ansible-playbook -i inventory.ini site.yml --syntax-check
-```
-
-Run:
-
-```bash
-ansible-playbook -i inventory.ini site.yml
-```
-
-Just:
+## Commands
 
 ```bash
 just init
 just syntax
 just run
-just docker
-just k8s
+just domain
+just kubernetes
+just destroy
+just destroy-all
+just vault-token
 ```
 
-## Folder structure
+- `just run`: deploy or update selected tools
+- `just domain`: update only domain, web, and TLS settings
+- `just kubernetes`: run with `global_deploy_mode=kubernetes`
+- `just destroy`: remove only selected tools
+- `just destroy-all`: remove everything, ignores tool booleans
+- `just vault-token`: generate a Vault testing token and save it into `config.yaml`
 
-```text
-.
-├── Justfile
-├── README.md
-├── galaxy.yml
-├── collections/
-├── group_vars/
-├── inventory.ini
-├── roles/
-│   ├── common/
-│   ├── jenkins/
-│   └── sonarqube/
-└── site.yml
-```
+## Defaults
+
+- Jenkins: `admin` and initial password from the final summary
+- SonarQube: `admin / admin`
+- Harbor: `admin / Harbor12345`
+- Vault testing UI: `http://SERVER_IP:8200/ui`
+- MinIO: API `http://minio-api.example.com` and console `http://minio-console.example.com`
+
+## Important Notes
+
+- `just destroy` respects the tool booleans
+- `just destroy-all` removes everything no matter what the booleans are
+- This setup uses **Traefik** as the reverse proxy instead of Nginx. Traefik automatically discovers containers and handles Let's Encrypt certificates.
+- Harbor firewall: allow `8081` for HTTP or `8443` for HTTPS
+- Vault firewall: allow `8200`
+- MinIO uses separate API and console domains when `use_domain: true`
+- MinIO on Kubernetes IP mode uses NodePorts `30910` and `30911` by default
+- SonarQube on Kubernetes IP mode uses NodePort `30900` by default
+- Harbor on Kubernetes IP mode uses NodePort `30081` by default
+- Vault on Kubernetes IP mode uses NodePort `30200` by default
+- Vault testing mode uses the token in `vault_root_token`
+- Vault production mode now automatically performs `vault operator init`, unsealing, and configures AppRole/KV v2
+- `.app` domains should use TLS

@@ -1,0 +1,100 @@
+---
+- name: Set SonarQube API URL for Docker mode
+  ansible.builtin.set_fact:
+    sonarqube_api_url: "{{ sonarqube_internal_url }}"
+  when: sonarqube_deploy_mode == "docker"
+
+- name: Get SonarQube service details for Kubernetes mode
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    api_version: v1
+    kind: Service
+    namespace: "{{ sonarqube_namespace }}"
+    name: "{{ sonarqube_service_name }}"
+  register: sonarqube_service_info
+  when: sonarqube_deploy_mode == "k8s"
+
+- name: Set SonarQube API URL for Kubernetes mode
+  ansible.builtin.set_fact:
+    sonarqube_api_url: "http://{{ sonarqube_service_info.resources[0].spec.clusterIP }}:{{ sonarqube_service_info.resources[0].spec.ports[0].port }}"
+  when: sonarqube_deploy_mode == "k8s"
+
+- name: Set SonarQube displayed username
+  ansible.builtin.set_fact:
+    sonarqube_display_username: admin
+
+- name: Set SonarQube displayed password
+  ansible.builtin.set_fact:
+    sonarqube_display_password: admin
+
+- name: Check whether SonarQube TLS certificate exists
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ sonarqube_domain }}/fullchain.pem"
+  register: sonarqube_tls_certificate
+  when:
+    - sonarqube_deploy_mode == "docker"
+    - (sonarqube_domain | default('')) | length > 0
+
+- name: Set SonarQube displayed host
+  ansible.builtin.set_fact:
+    sonarqube_display_host: >-
+      {{
+        (
+          sonarqube_use_domain | default(true) | bool
+          and (sonarqube_domain | default('')) | length > 0
+        )
+        | ternary(sonarqube_domain, ansible_host)
+      }}
+
+- name: Set SonarQube displayed port
+  ansible.builtin.set_fact:
+    sonarqube_display_port: >-
+      {{
+        (
+          sonarqube_deploy_mode == 'k8s'
+          and not (sonarqube_use_domain | default(true) | bool)
+          and (install_nginx | default(false) | bool)
+        )
+        | ternary(
+            80,
+            (
+              (
+                sonarqube_deploy_mode == 'k8s'
+                and not (sonarqube_use_domain | default(true) | bool)
+              )
+              | ternary(sonarqube_k8s_node_port, ((sonarqube_enable_tls | bool) | ternary(443, 80)))
+            )
+          )
+      }}
+
+- name: Set SonarQube displayed URL
+  ansible.builtin.set_fact:
+    sonarqube_display_url: >-
+      {{
+        (
+          (
+            sonarqube_deploy_mode == 'k8s'
+            and sonarqube_enable_tls | bool
+          )
+          or
+          (
+            sonarqube_deploy_mode == 'docker'
+            and sonarqube_enable_tls | bool
+            and (sonarqube_tls_certificate.stat.exists | default(false))
+          )
+        )
+        | ternary('https://', 'http://')
+        ~ sonarqube_display_host
+        ~ (
+            ((sonarqube_display_port | int) in [80, 443])
+            | ternary('', ':' ~ (sonarqube_display_port | string))
+          )
+      }}
+
+- name: Store SonarQube login information
+  ansible.builtin.set_fact:
+    sonarqube_access_summary:
+      url: "{{ sonarqube_display_url }}"
+      username: "{{ sonarqube_display_username }}"
+      password: "{{ sonarqube_display_password }}"

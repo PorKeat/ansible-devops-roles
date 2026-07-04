@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ minio_service_name }}
+  namespace: {{ minio_namespace }}
+spec:
+  type: {{ ((minio_deploy_mode == 'k8s') and not (minio_use_domain | default(true) | bool)) | ternary('NodePort', minio_service_type) }}
+  selector:
+    app: minio
+  ports:
+    - name: api
+      port: {{ minio_api_port }}
+      targetPort: api
+{% if minio_deploy_mode == 'k8s' and not (minio_use_domain | default(true) | bool) %}
+      nodePort: {{ minio_k8s_api_node_port | int }}
+{% endif %}
+    - name: console
+      port: {{ minio_console_port }}
+      targetPort: console
+{% if minio_deploy_mode == 'k8s' and not (minio_use_domain | default(true) | bool) %}
+      nodePort: {{ minio_k8s_console_node_port | int }}
+{% endif %}

@@ -1,0 +1,53 @@
+---
+- name: Set Vault displayed host for Kubernetes mode
+  ansible.builtin.set_fact:
+    vault_display_host: >-
+      {{
+        (
+          vault_use_domain | bool
+          and (vault_domain | default('')) | length > 0
+        )
+        | ternary(vault_domain, ansible_host)
+      }}
+
+- name: Set Vault displayed scheme for Kubernetes mode
+  ansible.builtin.set_fact:
+    vault_display_scheme: "{{ (vault_enable_tls | bool) | ternary('https', 'http') }}"
+
+- name: Set Vault displayed port for Kubernetes mode
+  ansible.builtin.set_fact:
+    vault_display_port: >-
+      {{
+        (
+          vault_use_domain | bool
+          and (vault_domain | default('')) | length > 0
+        )
+        | ternary(
+            ((vault_enable_tls | bool) | ternary(443, 80)),
+            (vault_k8s_node_port | int)
+          )
+      }}
+
+- name: Set Vault public URL for Kubernetes mode
+  ansible.builtin.set_fact:
+    vault_public_url: >-
+      {{
+        vault_display_scheme ~ '://' ~ vault_display_host
+        ~ (
+            ((vault_display_port | int) in [80, 443])
+            | ternary('', ':' ~ (vault_display_port | string))
+          )
+      }}
+
+- name: Set Vault cluster URL for Kubernetes mode
+  ansible.builtin.set_fact:
+    vault_cluster_url: "{{ vault_public_url }}"
+
+- name: Create Vault namespace
+  ansible.builtin.include_tasks: k8s_namespace.yaml
+
+- name: Deploy Vault workload resources
+  ansible.builtin.include_tasks: k8s_deploy.yaml
+
+- name: Show Vault access information
+  ansible.builtin.include_tasks: access.yaml

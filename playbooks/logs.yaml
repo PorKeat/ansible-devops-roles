@@ -1,0 +1,29 @@
+---
+- name: Build runtime targets for logs
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - name: Build dynamic inventory
+      ansible.builtin.include_tasks: tasks/bootstrap.yaml
+
+- name: Show service logs
+  hosts: common_targets
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../config.yaml
+    - ../group_vars/all.yaml
+  pre_tasks:
+    - name: Resolve Kubernetes kubeconfig path
+      ansible.builtin.include_tasks: tasks/resolve_kubeconfig.yaml
+      when: platform_deploy_mode == "k8s"
+  tasks:
+    - name: Print logs
+      ansible.builtin.include_tasks: tasks/logs.yaml

@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ minio_service_name }}
+  namespace: {{ minio_namespace }}
+spec:
+  replicas: {{ minio_replicas }}
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+{% if minio_use_pvc | bool %}
+      securityContext:
+        fsGroup: 1000
+{% endif %}
+      containers:
+        - name: minio
+          image: {{ minio_image | quote }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - server
+            - --address
+            - ":{{ minio_api_port }}"
+            - --console-address
+            - ":{{ minio_console_port }}"
+            - /data
+          env:
+            - name: MINIO_ROOT_USER
+              value: {{ minio_root_user | quote }}
+            - name: MINIO_ROOT_PASSWORD
+              value: {{ minio_root_password | quote }}
+{% if minio_use_domain | default(true) | bool %}
+            - name: MINIO_SERVER_URL
+              value: {{ minio_server_url | quote }}
+            - name: MINIO_BROWSER_REDIRECT_URL
+              value: {{ minio_browser_redirect_url | quote }}
+{% endif %}
+          ports:
+            - name: api
+              containerPort: {{ minio_api_port }}
+            - name: console
+              containerPort: {{ minio_console_port }}
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: api
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: api
+            initialDelaySeconds: 30
+            periodSeconds: 20
+{% if minio_use_pvc | bool %}
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
+{% endif %}
+{% if minio_use_pvc | bool %}
+      volumes:
+        - name: minio-data
+          persistentVolumeClaim:
+            claimName: {{ minio_pvc_name }}
+{% endif %}

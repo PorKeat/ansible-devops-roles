@@ -1,0 +1,22 @@
+---
+- name: Remove Docker runtime
+  ansible.builtin.include_tasks: cleanup_docker.yaml
+
+- name: Remove Nginx
+  ansible.builtin.include_tasks: cleanup_nginx.yaml
+
+- name: Remove Certbot
+  ansible.builtin.include_tasks: cleanup_certbot.yaml
+
+- name: Remove kubectl
+  ansible.builtin.include_tasks: cleanup_kubectl.yaml
+
+- name: Remove Helm
+  ansible.builtin.include_tasks: cleanup_helm.yaml
+
+- name: Remove shared sysctl config
+  ansible.builtin.file:
+    path: "{{ common_sysctl_file }}"
+    state: absent
+  notify: reload sysctl in common
+  when: common_cleanup_remove_sysctl_file | bool

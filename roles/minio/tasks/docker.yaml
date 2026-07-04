@@ -1,0 +1,25 @@
+---
+- name: Deploy MinIO Docker Compose stack
+  ansible.builtin.include_tasks: docker_deploy.yaml
+  when: not (web_only | default(false) | bool)
+
+
+
+- name: Wait for MinIO API port to open
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ minio_api_port }}"
+    timeout: "{{ minio_port_wait_timeout }}"
+    delay: 0
+  when: not (web_only | default(false) | bool)
+
+- name: Wait for MinIO console port to open
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ minio_console_port }}"
+    timeout: "{{ minio_port_wait_timeout }}"
+    delay: 0
+  when: not (web_only | default(false) | bool)
+
+- name: Show MinIO access information
+  ansible.builtin.include_tasks: access.yaml

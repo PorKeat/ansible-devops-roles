@@ -1,0 +1,21 @@
+---
+- name: Check for Vault Docker Compose file
+  ansible.builtin.stat:
+    path: "{{ vault_compose_file }}"
+  register: vault_compose_file_stat
+
+- name: Stop Vault Docker Compose stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ vault_install_dir }}"
+    project_name: "{{ vault_compose_project_name }}"
+    state: absent
+    remove_images: local
+    remove_orphans: true
+    remove_volumes: "{{ vault_cleanup_remove_docker_volumes }}"
+  when: vault_compose_file_stat.stat.exists
+
+- name: Remove Vault installation directory
+  ansible.builtin.file:
+    path: "{{ vault_install_dir }}"
+    state: absent
+  when: vault_cleanup_remove_data | bool

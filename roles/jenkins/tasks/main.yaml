@@ -1,0 +1,25 @@
+---
+- name: Validate Jenkins configuration
+  ansible.builtin.include_tasks: validate.yaml
+
+- name: Prepare Jenkins host prerequisites
+  ansible.builtin.include_tasks: prerequisites.yaml
+  when:
+    - jenkins_state == "present"
+    - jenkins_manage_system_prereqs | bool
+
+- name: Deploy Jenkins in Docker mode
+  ansible.builtin.include_tasks: docker.yaml
+  when:
+    - jenkins_state == "present"
+    - jenkins_deploy_mode == "docker"
+
+- name: Deploy Jenkins in Kubernetes mode
+  ansible.builtin.include_tasks: k8s.yaml
+  when:
+    - jenkins_state == "present"
+    - jenkins_deploy_mode == "k8s"
+
+- name: Remove Jenkins deployment resources
+  ansible.builtin.include_tasks: cleanup.yaml
+  when: jenkins_state == "absent"

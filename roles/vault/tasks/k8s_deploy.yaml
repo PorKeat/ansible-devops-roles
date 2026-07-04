@@ -1,0 +1,53 @@
+---
+- name: Read Vault TLS certificate file for Kubernetes ingress
+  ansible.builtin.slurp:
+    src: "{{ vault_tls_certificate_path }}"
+  register: vault_tls_certificate_content
+  when:
+    - vault_enable_tls | bool
+    - vault_use_domain | bool
+
+- name: Read Vault TLS private key file for Kubernetes ingress
+  ansible.builtin.slurp:
+    src: "{{ vault_tls_private_key_path }}"
+  register: vault_tls_private_key_content
+  when:
+    - vault_enable_tls | bool
+    - vault_use_domain | bool
+
+- name: Create Vault Kubernetes TLS secret
+  kubernetes.core.k8s:
+    kubeconfig: "{{ vault_kubeconfig_path }}"
+    validate_certs: "{{ vault_k8s_validate_certs }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ vault_k8s_ingress_tls_secret_name }}"
+        namespace: "{{ vault_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ vault_tls_certificate_content.content | b64decode }}"
+        tls.key: "{{ vault_tls_private_key_content.content | b64decode }}"
+  when:
+    - vault_enable_tls | bool
+    - vault_use_domain | bool
+
+- name: Add Vault Helm repository
+  kubernetes.core.helm_repository:
+    name: "{{ vault_helm_repo_name }}"
+    repo_url: "{{ vault_helm_repo_url }}"
+
+- name: Install Vault Helm release
+  kubernetes.core.helm:
+    kubeconfig: "{{ vault_kubeconfig_path }}"
+    release_namespace: "{{ vault_namespace }}"
+    create_namespace: false
+    name: "{{ vault_release_name }}"
+    chart_ref: "{{ vault_chart_ref }}"
+    chart_version: "{{ vault_chart_version | default(omit, true) }}"
+    update_repo_cache: true
+    wait: true
+    state: present
+    values: "{{ lookup('template', 'vault-values.yaml.j2') | from_yaml }}"

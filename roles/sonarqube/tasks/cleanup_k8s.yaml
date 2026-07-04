@@ -1,0 +1,96 @@
+---
+- name: Remove SonarQube ingress
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: absent
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: "{{ sonarqube_ingress_name }}"
+        namespace: "{{ sonarqube_namespace }}"
+
+- name: Remove SonarQube service
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: absent
+    definition: "{{ lookup('template', 'sonarqube-service.yaml.j2') | from_yaml }}"
+
+- name: Remove SonarQube deployment
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: absent
+    definition: "{{ lookup('template', 'sonarqube-deployment.yaml.j2') | from_yaml }}"
+
+- name: Remove PostgreSQL service
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: absent
+    definition: "{{ lookup('template', 'postgres-service.yaml.j2') | from_yaml }}"
+
+- name: Remove PostgreSQL deployment
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: absent
+    definition: "{{ lookup('template', 'postgres-deployment.yaml.j2') | from_yaml }}"
+
+- name: Remove SonarQube persistent volume claim
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: absent
+    definition: "{{ lookup('template', 'sonarqube-pvc.yaml.j2') | from_yaml }}"
+  when: sonarqube_use_pvc | bool
+
+- name: Remove PostgreSQL persistent volume claim
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: absent
+    definition: "{{ lookup('template', 'postgres-pvc.yaml.j2') | from_yaml }}"
+  when: postgres_use_pvc | bool
+
+- name: Remove SonarQube namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ sonarqube_kubeconfig_path }}"
+    validate_certs: "{{ sonarqube_k8s_validate_certs }}"
+    state: absent
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ sonarqube_namespace }}"
+  when: sonarqube_cleanup_remove_namespace | bool
+
+- name: Gather service facts for SonarQube Kubernetes cleanup
+  ansible.builtin.service_facts:
+
+- name: Remove SonarQube Nginx enabled site for Kubernetes mode
+  ansible.builtin.file:
+    path: "{{ sonarqube_nginx_site_enabled_path }}"
+    state: absent
+  register: sonarqube_k8s_nginx_enabled_cleanup
+
+- name: Remove SonarQube Nginx site file for Kubernetes mode
+  ansible.builtin.file:
+    path: "{{ sonarqube_nginx_site_path }}"
+    state: absent
+  register: sonarqube_k8s_nginx_site_cleanup
+
+- name: Validate Nginx configuration after SonarQube Kubernetes cleanup
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  when: "'nginx.service' in ansible_facts.services"
+
+- name: Restart Nginx after SonarQube Kubernetes cleanup
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+  when:
+    - "'nginx.service' in ansible_facts.services"
+    - sonarqube_k8s_nginx_enabled_cleanup.changed or sonarqube_k8s_nginx_site_cleanup.changed

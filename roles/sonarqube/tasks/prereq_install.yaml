@@ -1,0 +1,17 @@
+---
+- name: Install SonarQube base packages
+  ansible.builtin.apt:
+    name: "{{ sonarqube_base_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Render SonarQube sysctl config
+  ansible.builtin.template:
+    src: sonarqube-sysctl.conf.j2
+    dest: "{{ sonarqube_sysctl_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload sysctl for sonarqube
+  when: sonarqube_deploy_mode == "docker"

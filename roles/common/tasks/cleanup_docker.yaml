@@ -1,0 +1,41 @@
+---
+- name: Gather service facts for Docker cleanup
+  ansible.builtin.service_facts:
+
+- name: Stop Docker service
+  ansible.builtin.service:
+    name: docker
+    state: stopped
+    enabled: false
+  failed_when: false
+  when: "'docker.service' in ansible_facts.services"
+
+- name: Remove Docker packages
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: absent
+    purge: true
+    autoremove: true
+
+- name: Remove Docker apt repository
+  ansible.builtin.apt_repository:
+    repo: "{{ docker_apt_repo }}"
+    filename: "{{ docker_apt_repo_filename }}"
+    state: absent
+    update_cache: true
+
+- name: Remove Docker apt key
+  ansible.builtin.file:
+    path: "{{ docker_apt_key_path }}"
+    state: absent
+
+- name: Remove Docker data directories
+  ansible.builtin.file:
+    path: "{{ docker_cleanup_path }}"
+    state: absent
+  loop:
+    - /var/lib/docker
+    - /var/lib/containerd
+  loop_control:
+    loop_var: docker_cleanup_path
+  when: common_cleanup_remove_docker_data | bool

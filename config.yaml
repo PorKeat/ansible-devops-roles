@@ -1,0 +1,233 @@
+---
+#
+# ------------------------------------------------------------
+# Edit This File Only
+# ------------------------------------------------------------
+#
+#
+# ------------------------------------------------------------
+# Service Selection
+# ------------------------------------------------------------
+#
+jenkins: false
+sonarqube: false
+harbor: false
+hashicorp_vault: true
+minio: true
+
+#
+# ------------------------------------------------------------
+# Target Layout
+# ------------------------------------------------------------
+#
+# single | split
+target_layout: single
+
+#
+# ------------------------------------------------------------
+# Shared Target Connection
+# ------------------------------------------------------------
+#
+# ssh | local
+ansible_connection: ssh
+ansible_host: 35.247.184.216
+ansible_user: alexkgm
+ansible_python_interpreter: /usr/bin/python3
+ansible_ssh_private_key_file: ~/.ssh/google_compute_engine
+# Optional SSH override.
+# First connection: -o StrictHostKeyChecking=accept-new
+# Temporary bypass only: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
+
+#
+# ------------------------------------------------------------
+# Split Target Connection
+# ------------------------------------------------------------
+#
+# Uncomment these when target_layout is split
+
+# ----- Jenkins -----
+# jenkins_ansible_connection: ssh
+# jenkins_ansible_host: 34.87.4.58
+# jenkins_ansible_user: alexkgm2412
+# jenkins_ansible_python_interpreter: /usr/bin/python3
+# jenkins_ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+# jenkins_ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
+
+# ----- SonarQube -----
+# sonarqube_ansible_connection: ssh
+# sonarqube_ansible_host: 34.87.4.59
+# sonarqube_ansible_user: alexkgm2412
+# sonarqube_ansible_python_interpreter: /usr/bin/python3
+# sonarqube_ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+# sonarqube_ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
+
+# ----- Harbor -----
+# harbor_ansible_connection: ssh
+# harbor_ansible_host: 34.87.4.60
+# harbor_ansible_user: alexkgm2412
+# harbor_ansible_python_interpreter: /usr/bin/python3
+# harbor_ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+# harbor_ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
+
+# ----- Vault -----
+# vault_ansible_connection: ssh
+# vault_ansible_host: 34.87.4.61
+# vault_ansible_user: alexkgm2412
+# vault_ansible_python_interpreter: /usr/bin/python3
+# vault_ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+# vault_ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
+
+# ----- MinIO -----
+# minio_ansible_connection: ssh
+# minio_ansible_host: 34.87.4.62
+# minio_ansible_user: alexkgm2412
+# minio_ansible_python_interpreter: /usr/bin/python3
+# minio_ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+# minio_ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
+
+#
+# ------------------------------------------------------------
+# Shared Settings
+# ------------------------------------------------------------
+#
+# ----- Global -----
+# present | absent
+deployment_state: present
+# docker | kubernetes
+global_deploy_mode: docker
+enable_tls: true
+vault_enable_tls: true
+tls_email: alexkgm2412@gmail.com
+
+# ----- Domains -----
+use_domain: true
+jenkins_domain: jenkins-a8s.cambostack.app
+sonarqube_domain: sonar-a8s.cambostack.app
+harbor_domain: harbor-a8s.cambostack.app
+vault_domain: vault.autonomous-istad.com
+minio_api_domain: minio.autonomous-istad.com
+minio_console_domain: minio-console.autonomous-istad.com
+
+# ----- Jenkins -----
+jenkins_image: jenkins/jenkins:lts
+jenkins_http_port: 8080
+jenkins_agent_port: 50000
+
+# ----- SonarQube -----
+sonarqube_image: sonarqube:community
+postgres_image: postgres:15
+sonarqube_http_port: 9000
+postgres_port: 5432
+sonarqube_db_name: sonarqube
+sonarqube_db_user: sonarqube
+sonarqube_db_password: 1234
+
+# ----- Harbor -----
+harbor_version: 2.14.1
+harbor_http_port: 8081
+harbor_https_port: 8443
+harbor_trivy_enabled: true
+harbor_admin_password: Harbor12345
+harbor_database_password: root123
+
+# ----- Vault -----
+# Docker-only in this repo
+vault_version: 1.21.4
+# testing | production
+# testing: uses vault_root_token below
+# production: Vault generates root token during vault operator init
+vault_mode: production
+vault_http_port: 8200
+vault_cluster_port: 8201
+# testing only: run just vault-token
+# production: ignored
+vault_root_token: vault-dev-1283927ef1773df0c7448543d7e178582222cb32e536a969
+
+# ----- MinIO -----
+# use 2 separate domains for MinIO in domain mode
+minio_image: minio/minio:latest
+minio_api_port: 9000
+minio_console_port: 9001
+minio_root_user: alexkgm
+# at least 8 characters
+minio_root_password: alexkgm123
+
+#
+# ------------------------------------------------------------
+# Docker Settings
+# ------------------------------------------------------------
+#
+# ----- Global -----
+install_docker: true
+
+# ----- Jenkins -----
+jenkins_install_dir: /opt/jenkins
+
+# ----- SonarQube -----
+sonarqube_install_dir: /opt/sonarqube
+
+# ----- Harbor -----
+harbor_install_dir: /opt/harbor
+
+# ----- Vault -----
+vault_install_dir: /opt/vault
+
+# ----- MinIO -----
+minio_install_dir: /opt/minio
+
+#
+# ------------------------------------------------------------
+# Kubernetes Settings
+# ------------------------------------------------------------
+#
+# ----- Global -----
+# Uncomment these when global_deploy_mode is kubernetes
+# ansible_host can be the control-plane node
+# your domain can still point to the worker or node that schedule
+# kubeconfig is auto-detected from common paths on the remote host
+# optional override for custom setups:
+# k8s_kubeconfig_override_path: /etc/kubernetes/admin.conf
+ingress_class_name: nginx
+
+# ----- Jenkins -----
+jenkins_namespace: jenkins
+jenkins_storage_size: 10Gi
+# jenkins_storage_class_name works only when PVC is enabled
+# examples:
+# jenkins_storage_class_name: local-path   # node-local persistent storage
+# jenkins_storage_class_name: longhorn     # Longhorn-managed persistent storage
+# jenkins_storage_class_name: ""           # use cluster default storage class
+jenkins_storage_class_name: local-path
+# jenkins_use_pvc: false          # quick test only, no persistent Jenkins data
+# jenkins_k8s_node_port: 30080    # IP mode URL becomes http://<server-ip>:30080
+jenkins_ingress_tls_secret_name: jenkins-tls
+
+# ----- SonarQube -----
+# sonarqube_namespace: sonarqube
+# sonarqube_storage_size: 10Gi
+# postgres_storage_size: 8Gi
+# sonarqube_k8s_node_port: 30900    # IP mode URL becomes http://<server-ip>:30900
+# sonarqube_ingress_tls_secret_name: sonarqube-tls
+
+# ----- Harbor -----
+# harbor_namespace: harbor
+# harbor_k8s_http_node_port: 30081
+# harbor_k8s_https_node_port: 30443
+# harbor_ingress_tls_secret_name: harbor-tls
+
+# ----- Vault -----
+# vault_namespace: vault
+# vault_k8s_node_port: 30200
+# vault_k8s_ingress_tls_secret_name: vault-tls
+# vault_storage_size: 10Gi
+
+# ----- MinIO -----
+# Domain mode uses 2 separate hostnames: one for the API and one for the console
+# minio_namespace: minio
+# minio_storage_size: 20Gi
+# minio_storage_class_name: local-path    # use a specific storage class when PVC is enabled
+# minio_use_pvc: false                    # quick test only, no persistent object data
+# minio_ingress_tls_secret_name: minio-tls
+# minio_k8s_api_node_port: 30910          # Kubernetes API URL becomes http://<server-ip>:30910
+# minio_k8s_console_node_port: 30911      # Kubernetes console URL becomes http://<server-ip>:30911

@@ -1,0 +1,34 @@
+---
+- name: Remove Harbor Helm release
+  kubernetes.core.helm:
+    kubeconfig: "{{ harbor_kubeconfig_path }}"
+    release_namespace: "{{ harbor_namespace }}"
+    name: "{{ harbor_release_name }}"
+    state: absent
+  failed_when: false
+
+- name: Remove Harbor TLS secret
+  kubernetes.core.k8s:
+    kubeconfig: "{{ harbor_kubeconfig_path }}"
+    validate_certs: "{{ harbor_k8s_validate_certs }}"
+    state: absent
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ harbor_ingress_tls_secret_name }}"
+        namespace: "{{ harbor_namespace }}"
+  failed_when: false
+
+- name: Remove Harbor namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ harbor_kubeconfig_path }}"
+    validate_certs: "{{ harbor_k8s_validate_certs }}"
+    state: absent
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ harbor_namespace }}"
+  when: harbor_cleanup_remove_namespace | bool
+  failed_when: false

@@ -1,0 +1,53 @@
+---
+- name: Read Harbor TLS certificate file for Kubernetes ingress
+  ansible.builtin.slurp:
+    src: "{{ harbor_tls_certificate_path }}"
+  register: harbor_tls_certificate_content
+  when:
+    - harbor_enable_tls | bool
+    - harbor_use_domain | bool
+
+- name: Read Harbor TLS private key file for Kubernetes ingress
+  ansible.builtin.slurp:
+    src: "{{ harbor_tls_private_key_path }}"
+  register: harbor_tls_private_key_content
+  when:
+    - harbor_enable_tls | bool
+    - harbor_use_domain | bool
+
+- name: Create Harbor Kubernetes TLS secret
+  kubernetes.core.k8s:
+    kubeconfig: "{{ harbor_kubeconfig_path }}"
+    validate_certs: "{{ harbor_k8s_validate_certs }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ harbor_ingress_tls_secret_name }}"
+        namespace: "{{ harbor_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ harbor_tls_certificate_content.content | b64decode }}"
+        tls.key: "{{ harbor_tls_private_key_content.content | b64decode }}"
+  when:
+    - harbor_enable_tls | bool
+    - harbor_use_domain | bool
+
+- name: Add Harbor Helm repository
+  kubernetes.core.helm_repository:
+    name: "{{ harbor_helm_repo_name }}"
+    repo_url: "{{ harbor_helm_repo_url }}"
+
+- name: Install Harbor Helm release
+  kubernetes.core.helm:
+    kubeconfig: "{{ harbor_kubeconfig_path }}"
+    release_namespace: "{{ harbor_namespace }}"
+    create_namespace: false
+    name: "{{ harbor_release_name }}"
+    chart_ref: "{{ harbor_chart_ref }}"
+    chart_version: "{{ harbor_chart_version | default(omit, true) }}"
+    update_repo_cache: true
+    wait: true
+    state: present
+    values: "{{ lookup('template', 'harbor-values.yaml.j2') | from_yaml }}"

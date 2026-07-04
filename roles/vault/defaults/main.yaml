@@ -1,0 +1,43 @@
+---
+vault_state: present
+vault_deploy_mode: docker
+vault_mode: testing
+vault_enable_tls: false
+vault_use_domain: true
+vault_domain: ""
+vault_namespace: vault
+vault_install_dir: /opt/vault
+vault_version: 1.21.4
+vault_http_port: 8200
+vault_cluster_port: 8201
+vault_root_token: change_me_vault_root_token
+vault_uid: "100"
+vault_gid: "1000"
+vault_image: "hashicorp/vault:{{ vault_version }}"
+vault_container_name: vault
+vault_compose_project_name: vault
+vault_compose_file: "{{ vault_install_dir }}/docker-compose.yaml"
+vault_compose_recreate: always
+vault_config_dir: "{{ vault_install_dir }}/config"
+vault_data_dir: "{{ vault_install_dir }}/data"
+vault_config_file: "{{ vault_config_dir }}/vault.hcl"
+vault_node_id: vault-node-1
+vault_port_wait_timeout: 30
+vault_failure_log_lines: 80
+vault_tls_certificate_path: "/etc/letsencrypt/live/{{ vault_domain }}/fullchain.pem"
+vault_tls_private_key_path: "/etc/letsencrypt/live/{{ vault_domain }}/privkey.pem"
+vault_cleanup_remove_data: true
+vault_cleanup_remove_docker_volumes: true
+vault_cleanup_remove_namespace: true
+vault_kubeconfig_path: "/home/{{ ansible_user | default('ubuntu') }}/.kube/config"
+vault_k8s_validate_certs: true
+vault_helm_repo_name: hashicorp
+vault_helm_repo_url: https://helm.releases.hashicorp.com
+vault_chart_ref: hashicorp/vault
+vault_chart_version: ""
+vault_release_name: vault
+vault_ingress_class_name: nginx
+vault_k8s_ingress_tls_secret_name: vault-tls
+vault_k8s_node_port: 30200
+vault_storage_size: 10Gi
+vault_k8s_storage_class: ""

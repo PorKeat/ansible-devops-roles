@@ -1,0 +1,7 @@
+---
+- name: Create MinIO ingress
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'minio-ingress.yaml.j2') | from_yaml }}"

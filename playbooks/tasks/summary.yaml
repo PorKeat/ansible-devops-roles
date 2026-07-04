@@ -1,0 +1,166 @@
+---
+- name: Read local Vault credentials
+  ansible.builtin.set_fact:
+    vault_init_file: "{{ lookup('file', '../vault_init.json', errors='ignore') | from_json | default({}) }}"
+  delegate_to: localhost
+
+- name: Set Jenkins summary host
+  ansible.builtin.set_fact:
+    jenkins_summary_host: "{{ groups['jenkins_targets'][0] if (groups['jenkins_targets'] | length > 0) else '' }}"
+
+- name: Set SonarQube summary host
+  ansible.builtin.set_fact:
+    sonarqube_summary_host: "{{ groups['sonarqube_targets'][0] if (groups['sonarqube_targets'] | length > 0) else '' }}"
+
+- name: Set Harbor summary host
+  ansible.builtin.set_fact:
+    harbor_summary_host: "{{ groups['harbor_targets'][0] if (groups['harbor_targets'] | length > 0) else '' }}"
+
+- name: Set Vault summary host
+  ansible.builtin.set_fact:
+    vault_summary_host: "{{ groups['vault_targets'][0] if (groups['vault_targets'] | length > 0) else '' }}"
+
+- name: Set MinIO summary host
+  ansible.builtin.set_fact:
+    minio_summary_host: "{{ groups['minio_targets'][0] if (groups['minio_targets'] | length > 0) else '' }}"
+
+- name: Show access summary
+  ansible.builtin.debug:
+    msg: >-
+      {{
+        [
+          "==============================",
+          "Deployment finished",
+          "=============================="
+        ]
+        +
+        (
+          [
+            "",
+            "Jenkins",
+            "URL: " ~ hostvars[jenkins_summary_host].jenkins_access_summary.url,
+            "Username: " ~ hostvars[jenkins_summary_host].jenkins_access_summary.username,
+            "Password: " ~ hostvars[jenkins_summary_host].jenkins_access_summary.password
+          ]
+          if (
+            jenkins_summary_host | length > 0
+            and hostvars[jenkins_summary_host].jenkins_access_summary is defined
+          )
+          else []
+        )
+        +
+        (
+          [
+            "",
+            "SonarQube",
+            "URL: " ~ hostvars[sonarqube_summary_host].sonarqube_access_summary.url,
+            "Username: " ~ hostvars[sonarqube_summary_host].sonarqube_access_summary.username,
+            "Password: " ~ hostvars[sonarqube_summary_host].sonarqube_access_summary.password
+          ]
+          if (
+            sonarqube_summary_host | length > 0
+            and hostvars[sonarqube_summary_host].sonarqube_access_summary is defined
+          )
+          else []
+        )
+        +
+        (
+          [
+            "",
+            "Harbor",
+            "URL: " ~ hostvars[harbor_summary_host].harbor_access_summary.url,
+            "Username: " ~ hostvars[harbor_summary_host].harbor_access_summary.username,
+            "Password: " ~ hostvars[harbor_summary_host].harbor_access_summary.password,
+            "Registry: " ~ hostvars[harbor_summary_host].harbor_access_summary.registry,
+            "Firewall: " ~ hostvars[harbor_summary_host].harbor_access_summary.firewall
+          ]
+          +
+          (
+            [
+              "Note: " ~ hostvars[harbor_summary_host].harbor_access_summary.note
+            ]
+            if (
+              hostvars[harbor_summary_host].harbor_access_summary.note is defined
+              and (hostvars[harbor_summary_host].harbor_access_summary.note | length > 0)
+            )
+            else []
+          )
+          if (
+            harbor_summary_host | length > 0
+            and hostvars[harbor_summary_host].harbor_access_summary is defined
+          )
+          else []
+        )
+        +
+        (
+          [
+            "",
+            "Vault",
+            "URL: " ~ hostvars[vault_summary_host].vault_access_summary.url,
+            "UI: " ~ hostvars[vault_summary_host].vault_access_summary.ui,
+            "Status: " ~ ("Initialized, unsealed, and KV engine is active with the a8s secret path." if vault_init_file.root_token is defined else "Pending Initialization"),
+            "Firewall: " ~ hostvars[vault_summary_host].vault_access_summary.firewall
+          ]
+          +
+          (
+            [
+              "",
+              "IMPORTANT",
+              "",
+              "Vault Root Token: " ~ vault_init_file.root_token,
+              "",
+              "Unseal Keys (You need 3 of 5 to unseal Vault if it ever reboots):"
+            ] + vault_init_file.unseal_keys_b64
+            if vault_init_file.root_token is defined else []
+          )
+          if (
+            vault_summary_host | length > 0
+            and hostvars[vault_summary_host].vault_access_summary is defined
+          )
+          else []
+        )
+        +
+        (
+          [
+            "",
+            "MinIO",
+            "API: " ~ hostvars[minio_summary_host].minio_access_summary.api_url,
+            "Console: " ~ hostvars[minio_summary_host].minio_access_summary.console_url,
+            "Username: " ~ hostvars[minio_summary_host].minio_access_summary.username,
+            "Password: " ~ hostvars[minio_summary_host].minio_access_summary.password,
+            "mc: " ~ hostvars[minio_summary_host].minio_access_summary.mc_alias
+          ]
+          if (
+            minio_summary_host | length > 0
+            and hostvars[minio_summary_host].minio_access_summary is defined
+          )
+          else []
+        )
+      }}
+  when:
+    - deployment_state != 'absent'
+    - >
+      (
+        jenkins_summary_host | length > 0
+        and hostvars[jenkins_summary_host].jenkins_access_summary is defined
+      )
+      or
+      (
+        sonarqube_summary_host | length > 0
+        and hostvars[sonarqube_summary_host].sonarqube_access_summary is defined
+      )
+      or
+      (
+        harbor_summary_host | length > 0
+        and hostvars[harbor_summary_host].harbor_access_summary is defined
+      )
+      or
+      (
+        vault_summary_host | length > 0
+        and hostvars[vault_summary_host].vault_access_summary is defined
+      )
+      or
+      (
+        minio_summary_host | length > 0
+        and hostvars[minio_summary_host].minio_access_summary is defined
+      )

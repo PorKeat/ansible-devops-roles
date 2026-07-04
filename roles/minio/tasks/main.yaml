@@ -1,0 +1,19 @@
+---
+- name: Validate MinIO configuration
+  ansible.builtin.include_tasks: validate.yaml
+
+- name: Deploy MinIO in Docker mode
+  ansible.builtin.include_tasks: docker.yaml
+  when:
+    - minio_state == "present"
+    - minio_deploy_mode == "docker"
+
+- name: Deploy MinIO in Kubernetes mode
+  ansible.builtin.include_tasks: k8s.yaml
+  when:
+    - minio_state == "present"
+    - minio_deploy_mode == "k8s"
+
+- name: Remove MinIO deployment resources
+  ansible.builtin.include_tasks: cleanup.yaml
+  when: minio_state == "absent"

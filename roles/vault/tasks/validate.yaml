@@ -1,0 +1,71 @@
+---
+- name: Validate supported Vault deployment mode
+  ansible.builtin.assert:
+    that:
+      - vault_deploy_mode in ["docker", "k8s"]
+    fail_msg: "vault_deploy_mode must be either 'docker' or 'k8s'."
+
+- name: Validate supported Vault mode
+  ansible.builtin.assert:
+    that:
+      - vault_mode in ["testing", "production"]
+    fail_msg: "vault_mode must be either 'testing' or 'production'."
+  when: vault_state == "present"
+
+- name: Validate Vault testing mode TLS support
+  ansible.builtin.assert:
+    that:
+      - not vault_enable_tls | bool
+    fail_msg: "Vault testing mode in this role is HTTP-only. Use production mode if you want Vault TLS."
+  when:
+    - vault_state == "present"
+    - vault_mode == "testing"
+    - vault_deploy_mode == "docker"
+
+- name: Validate Vault domain
+  ansible.builtin.assert:
+    that:
+      - (vault_domain | default('')) | length > 0
+    fail_msg: "vault_domain must be set when use_domain is true."
+  when:
+    - vault_state == "present"
+    - vault_use_domain | bool
+
+- name: Check Vault TLS certificate file
+  ansible.builtin.stat:
+    path: "{{ vault_tls_certificate_path }}"
+  register: vault_tls_certificate_file
+  when:
+    - vault_state == "present"
+    - vault_enable_tls | bool
+
+- name: Validate Vault node port for Kubernetes IP mode
+  ansible.builtin.assert:
+    that:
+      - vault_k8s_node_port | int >= 30000
+      - vault_k8s_node_port | int <= 32767
+    fail_msg: "Vault Kubernetes node port must be in the 30000-32767 range."
+  when:
+    - vault_state == "present"
+    - vault_deploy_mode == "k8s"
+    - not vault_use_domain | bool
+
+- name: Check Vault TLS private key file
+  ansible.builtin.stat:
+    path: "{{ vault_tls_private_key_path }}"
+  register: vault_tls_private_key_file
+  when:
+    - vault_state == "present"
+    - vault_enable_tls | bool
+
+- name: Validate Vault TLS certificate files
+  ansible.builtin.assert:
+    that:
+      - vault_tls_certificate_file.stat.exists | default(false)
+      - vault_tls_private_key_file.stat.exists | default(false)
+    fail_msg: >-
+      Vault TLS expects existing certificate files on the server.
+      Put the certificate and private key at the configured paths, or turn TLS off.
+  when:
+    - vault_state == "present"
+    - vault_enable_tls | bool

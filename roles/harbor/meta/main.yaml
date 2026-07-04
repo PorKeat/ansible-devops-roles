@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  role_name: harbor
+  author: alexkgm
+  description: Deploy Harbor with the official installer in Docker mode.
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - harbor
+    - registry
+    - docker
+dependencies: []

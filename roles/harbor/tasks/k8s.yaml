@@ -1,0 +1,49 @@
+---
+- name: Set Harbor displayed host for Kubernetes mode
+  ansible.builtin.set_fact:
+    harbor_display_host: >-
+      {{
+        (
+          harbor_use_domain | bool
+          and (harbor_domain | default('')) | length > 0
+        )
+        | ternary(harbor_domain, ansible_host)
+      }}
+
+- name: Set Harbor displayed scheme for Kubernetes mode
+  ansible.builtin.set_fact:
+    harbor_display_scheme: "{{ (harbor_enable_tls | bool) | ternary('https', 'http') }}"
+
+- name: Set Harbor displayed port for Kubernetes mode
+  ansible.builtin.set_fact:
+    harbor_display_port: >-
+      {{
+        (
+          harbor_use_domain | bool
+          and (harbor_domain | default('')) | length > 0
+        )
+        | ternary(
+            ((harbor_enable_tls | bool) | ternary(443, 80)),
+            ((harbor_enable_tls | bool) | ternary(harbor_k8s_https_node_port, harbor_k8s_http_node_port))
+          )
+      }}
+
+- name: Set Harbor public URL for Kubernetes mode
+  ansible.builtin.set_fact:
+    harbor_public_url: >-
+      {{
+        harbor_display_scheme ~ '://' ~ harbor_display_host
+        ~ (
+            ((harbor_display_port | int) in [80, 443])
+            | ternary('', ':' ~ (harbor_display_port | string))
+          )
+      }}
+
+- name: Create Harbor namespace
+  ansible.builtin.include_tasks: k8s_namespace.yaml
+
+- name: Deploy Harbor workload resources
+  ansible.builtin.include_tasks: k8s_deploy.yaml
+
+- name: Show Harbor access information
+  ansible.builtin.include_tasks: access.yaml

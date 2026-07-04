@@ -1,0 +1,50 @@
+---
+- name: Validate supported SonarQube deployment mode
+  ansible.builtin.assert:
+    that:
+      - sonarqube_deploy_mode in ["docker", "k8s"]
+    fail_msg: "sonarqube_deploy_mode must be either 'docker' or 'k8s'."
+
+- name: Validate SonarQube domain
+  ansible.builtin.assert:
+    that:
+      - (sonarqube_domain | default('')) | length > 0
+    fail_msg: "sonarqube_domain must be set when use_domain is true."
+  when:
+    - sonarqube_use_domain | default(true) | bool
+
+- name: Validate SonarQube database settings
+  ansible.builtin.assert:
+    that:
+      - sonarqube_db_name | string | length > 0
+      - sonarqube_db_user | string | length > 0
+      - sonarqube_db_password | string | length > 0
+    fail_msg: "sonarqube_db_name, sonarqube_db_user, and sonarqube_db_password must all be set."
+
+- name: Validate TLS email when Docker TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - sonarqube_tls_email | length > 0
+    fail_msg: "sonarqube_tls_email must be set when sonarqube_enable_tls is true in Docker mode."
+  when:
+    - sonarqube_deploy_mode == "docker"
+    - sonarqube_enable_tls | bool
+
+- name: Validate TLS secret name when Kubernetes TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - sonarqube_ingress_tls_secret_name | length > 0
+    fail_msg: "sonarqube_ingress_tls_secret_name must be set when sonarqube_enable_tls is true in Kubernetes mode."
+  when:
+    - sonarqube_deploy_mode == "k8s"
+    - sonarqube_enable_tls | bool
+
+- name: Validate SonarQube node port for Kubernetes IP mode
+  ansible.builtin.assert:
+    that:
+      - sonarqube_k8s_node_port | int >= 30000
+      - sonarqube_k8s_node_port | int <= 32767
+    fail_msg: "SonarQube Kubernetes node port must be in the 30000-32767 range."
+  when:
+    - sonarqube_deploy_mode == "k8s"
+    - not sonarqube_use_domain | default(true) | bool

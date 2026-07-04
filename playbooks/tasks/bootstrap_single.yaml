@@ -1,0 +1,19 @@
+---
+- name: Add single shared target
+  ansible.builtin.add_host:
+    name: app-target
+    groups: >-
+      {{
+        ['common_targets']
+        + (install_jenkins | bool | ternary(['jenkins_targets'], []))
+        + (install_sonarqube | bool | ternary(['sonarqube_targets'], []))
+        + (install_harbor | bool | ternary(['harbor_targets'], []))
+        + (install_vault | bool | ternary(['vault_targets'], []))
+        + (install_minio | bool | ternary(['minio_targets'], []))
+      }}
+    ansible_connection: "{{ ansible_connection }}"
+    ansible_host: "{{ ansible_host }}"
+    ansible_user: "{{ ansible_user }}"
+    ansible_python_interpreter: "{{ ansible_python_interpreter }}"
+    ansible_ssh_private_key_file: "{{ ansible_ssh_private_key_file | default(omit) }}"
+    ansible_ssh_common_args: "{{ ansible_ssh_common_args | default(omit) }}"

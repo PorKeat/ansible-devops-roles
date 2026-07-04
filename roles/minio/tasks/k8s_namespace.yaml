@@ -1,0 +1,11 @@
+---
+- name: Ensure MinIO namespace exists
+  kubernetes.core.k8s:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ minio_namespace }}"

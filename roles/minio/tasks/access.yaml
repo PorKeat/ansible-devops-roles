@@ -1,0 +1,101 @@
+---
+- name: Give fresh MinIO pods time to boot before readiness checks
+  ansible.builtin.pause:
+    seconds: "{{ minio_initial_boot_wait }}"
+  when:
+    - minio_deploy_mode == "k8s"
+    - minio_k8s_deployment_apply is defined
+    - minio_k8s_deployment_apply.changed
+
+- name: Wait for MinIO pod to be running in Kubernetes mode
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ minio_kubeconfig_path }}"
+    validate_certs: "{{ minio_k8s_validate_certs }}"
+    api_version: v1
+    kind: Pod
+    namespace: "{{ minio_namespace }}"
+    label_selectors:
+      - app=minio
+  register: minio_pod_info
+  retries: "{{ minio_readiness_retries }}"
+  delay: "{{ minio_readiness_delay }}"
+  until:
+    - minio_pod_info.resources | length > 0
+    - minio_pod_info.resources[0].status.phase == "Running"
+    - >
+      (
+        minio_pod_info.resources[0].status.conditions | default([])
+        | selectattr('type', 'equalto', 'Ready')
+        | selectattr('status', 'equalto', 'True')
+        | list
+        | length
+      ) > 0
+  when: minio_deploy_mode == "k8s"
+
+- name: Set MinIO displayed host
+  ansible.builtin.set_fact:
+    minio_display_scheme: "{{ (minio_enable_tls | bool) | ternary('https', 'http') }}"
+
+- name: Set MinIO displayed API port
+  ansible.builtin.set_fact:
+    minio_display_api_port: >-
+      {{
+        (
+          minio_use_domain | default(true) | bool
+        )
+        | ternary(
+            ((minio_enable_tls | bool) | ternary(443, 80)),
+            ((minio_deploy_mode == 'docker') | ternary(minio_api_port, minio_k8s_api_node_port))
+          )
+      }}
+
+- name: Set MinIO displayed console port
+  ansible.builtin.set_fact:
+    minio_display_console_port: >-
+      {{
+        (
+          minio_use_domain | default(true) | bool
+        )
+        | ternary(
+            ((minio_enable_tls | bool) | ternary(443, 80)),
+            ((minio_deploy_mode == 'docker') | ternary(minio_console_port, minio_k8s_console_node_port))
+          )
+      }}
+
+- name: Set MinIO API URL
+  ansible.builtin.set_fact:
+    minio_api_url: >-
+      {{
+        minio_display_scheme ~ '://'
+        ~ ((minio_use_domain | default(true) | bool) | ternary(minio_api_domain, ansible_host))
+        ~ (
+            ((minio_display_api_port | int) in [80, 443])
+            | ternary('', ':' ~ (minio_display_api_port | string))
+          )
+      }}
+
+- name: Set MinIO console URL
+  ansible.builtin.set_fact:
+    minio_console_url: >-
+      {{
+        minio_display_scheme ~ '://'
+        ~ ((minio_use_domain | default(true) | bool) | ternary(minio_console_domain, ansible_host))
+        ~ (
+            ((minio_display_console_port | int) in [80, 443])
+            | ternary('', ':' ~ (minio_display_console_port | string))
+          )
+      }}
+
+- name: Set MinIO mc alias command
+  ansible.builtin.set_fact:
+    minio_mc_alias: >-
+      mc alias set local {{ minio_api_url }} {{ minio_root_user }} {{ minio_root_password }}
+
+- name: Store MinIO access information
+  ansible.builtin.set_fact:
+    minio_access_summary:
+      api_url: "{{ minio_api_url }}"
+      console_url: "{{ minio_console_url }}"
+      username: "{{ minio_root_user }}"
+      password: "{{ minio_root_password }}"
+      mc_alias: "{{ minio_mc_alias }}"

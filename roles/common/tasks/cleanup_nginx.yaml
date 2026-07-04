@@ -1,0 +1,23 @@
+---
+- name: Gather service facts for Nginx cleanup
+  ansible.builtin.service_facts:
+
+- name: Stop Nginx service
+  ansible.builtin.service:
+    name: nginx
+    state: stopped
+    enabled: false
+  failed_when: false
+  when: "'nginx.service' in ansible_facts.services"
+
+- name: Remove Nginx packages
+  ansible.builtin.apt:
+    name: "{{ nginx_packages }}"
+    state: absent
+    purge: true
+    autoremove: true
+
+- name: Remove Nginx configuration directory
+  ansible.builtin.file:
+    path: /etc/nginx
+    state: absent

@@ -10,7 +10,10 @@ metadata:
 spec:
   ingressClassName: {{ jenkins_ingress_class_name }}
   rules:
-    - host: {{ jenkins_domain }}
+    -
+{% if jenkins_use_domain | default(true) | bool %}
+      host: {{ jenkins_domain }}
+{% endif %}
       http:
         paths:
           - path: {{ jenkins_ingress_path }}
@@ -23,6 +26,8 @@ spec:
 {% if jenkins_enable_tls | bool %}
   tls:
     - hosts:
+{% if jenkins_use_domain | default(true) | bool %}
         - {{ jenkins_domain }}
+{% endif %}
       secretName: {{ jenkins_ingress_tls_secret_name }}
 {% endif %}

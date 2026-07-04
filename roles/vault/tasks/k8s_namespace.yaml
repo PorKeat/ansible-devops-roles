@@ -1,0 +1,11 @@
+---
+- name: Create Vault namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ vault_kubeconfig_path }}"
+    validate_certs: "{{ vault_k8s_validate_certs }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ vault_namespace }}"

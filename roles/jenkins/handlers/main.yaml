@@ -1,0 +1,5 @@
+---
+- name: restart nginx for jenkins
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded

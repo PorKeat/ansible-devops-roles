@@ -1,0 +1,51 @@
+---
+- name: Gather installed packages for Docker conflict checks
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Remove conflicting Docker packages
+  ansible.builtin.apt:
+    name: "{{ docker_conflicting_packages | select('in', ansible_facts.packages.keys() | list) | list }}"
+    state: absent
+    purge: true
+  when:
+    - docker_remove_conflicting_packages | bool
+    - (docker_conflicting_packages | select('in', ansible_facts.packages.keys() | list) | list) | length > 0
+
+- name: Ensure Docker apt keyring directory exists
+  ansible.builtin.file:
+    path: "{{ docker_apt_keyring_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Install Docker official apt GPG key
+  ansible.builtin.get_url:
+    url: "{{ docker_apt_key_url }}"
+    dest: "{{ docker_apt_key_path }}"
+    mode: "0644"
+
+- name: Add Docker official apt repository
+  ansible.builtin.apt_repository:
+    repo: "{{ docker_apt_repo }}"
+    filename: "{{ docker_apt_repo_filename }}"
+    state: present
+    update_cache: true
+
+- name: Install Docker Engine packages
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+    install_recommends: false
+
+- name: Ensure Docker service is enabled and running
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Add deployment user to docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+  when: ansible_user is defined and ansible_user | length > 0

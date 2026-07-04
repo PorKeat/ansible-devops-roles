@@ -1,0 +1,57 @@
+---
+- name: Check for Jenkins Docker Compose file
+  ansible.builtin.stat:
+    path: "{{ jenkins_compose_file }}"
+  register: jenkins_compose_file_stat
+
+- name: Stop Jenkins Docker Compose stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ jenkins_install_dir }}"
+    project_name: "{{ jenkins_compose_project_name }}"
+    state: absent
+    remove_images: local
+    remove_orphans: true
+    remove_volumes: "{{ jenkins_cleanup_remove_docker_volumes }}"
+  when: jenkins_compose_file_stat.stat.exists
+
+- name: Gather service facts for Jenkins cleanup
+  ansible.builtin.service_facts:
+
+- name: Remove Jenkins Nginx enabled site
+  ansible.builtin.file:
+    path: "{{ jenkins_nginx_site_enabled_path }}"
+    state: absent
+  register: jenkins_nginx_enabled_cleanup
+
+- name: Remove Jenkins Nginx site file
+  ansible.builtin.file:
+    path: "{{ jenkins_nginx_site_path }}"
+    state: absent
+  register: jenkins_nginx_site_cleanup
+
+- name: Validate Nginx configuration after Jenkins cleanup
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  when: "'nginx.service' in ansible_facts.services"
+
+- name: Restart Nginx after Jenkins cleanup
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+  when:
+    - "'nginx.service' in ansible_facts.services"
+    - jenkins_nginx_enabled_cleanup.changed or jenkins_nginx_site_cleanup.changed
+
+- name: Remove Jenkins TLS certificate
+  ansible.builtin.command:
+    cmd: "certbot delete --non-interactive --cert-name {{ jenkins_domain }}"
+  register: jenkins_certbot_delete
+  changed_when: jenkins_certbot_delete.rc == 0
+  failed_when: false
+  when: jenkins_cleanup_remove_certificates | bool
+
+- name: Remove Jenkins installation directory
+  ansible.builtin.file:
+    path: "{{ jenkins_install_dir }}"
+    state: absent
+  when: jenkins_cleanup_remove_data | bool

@@ -1,0 +1,60 @@
+---
+minio_state: present
+minio_deploy_mode: docker
+minio_use_domain: true
+minio_enable_tls: false
+minio_tls_email: ""
+minio_api_domain: ""
+minio_console_domain: ""
+minio_external_scheme: "{{ (minio_enable_tls | bool) | ternary('https', 'http') }}"
+minio_server_url: "{{ minio_external_scheme }}://{{ minio_api_domain }}"
+minio_browser_redirect_url: "{{ minio_external_scheme }}://{{ minio_console_domain }}"
+minio_install_dir: /opt/minio
+minio_image: minio/minio:latest
+minio_api_port: 9000
+minio_console_port: 9001
+minio_root_user: minioadmin
+minio_root_password: change_me_minio_password
+minio_tls_skip_if_dns_not_ready: true
+minio_tls_certificate_path: "/etc/letsencrypt/live/{{ minio_api_domain }}/fullchain.pem"
+minio_tls_private_key_path: "/etc/letsencrypt/live/{{ minio_api_domain }}/privkey.pem"
+
+minio_compose_project_name: minio
+minio_compose_file: "{{ minio_install_dir }}/docker-compose.yaml"
+minio_container_name: minio
+minio_data_dir: "{{ minio_install_dir }}/data"
+minio_compose_pull_policy: missing
+minio_compose_recreate: auto
+minio_nginx_api_upstream_url: "http://127.0.0.1:{{ minio_api_port }}"
+minio_nginx_console_upstream_url: "http://127.0.0.1:{{ minio_console_port }}"
+minio_nginx_site_filename: minio.conf
+minio_nginx_site_path: "/etc/nginx/sites-available/{{ minio_nginx_site_filename }}"
+minio_nginx_site_enabled_path: "/etc/nginx/sites-enabled/{{ minio_nginx_site_filename }}"
+minio_port_wait_timeout: 30
+minio_failure_log_lines: 80
+
+minio_namespace: minio
+minio_kubeconfig_path: "/home/{{ ansible_user | default('ubuntu') }}/.kube/config"
+minio_k8s_validate_certs: true
+minio_replicas: 1
+minio_service_name: minio
+minio_service_type: ClusterIP
+minio_use_pvc: true
+minio_pvc_name: minio-data
+minio_persistence_access_modes:
+  - ReadWriteOnce
+minio_storage_size: 20Gi
+minio_storage_class_name: ""
+minio_k8s_api_node_port: 30910
+minio_k8s_console_node_port: 30911
+minio_ingress_name: minio
+minio_ingress_annotations: {}
+minio_ingress_tls_secret_name: minio-tls
+minio_initial_boot_wait: 10
+minio_readiness_retries: 18
+minio_readiness_delay: 5
+
+minio_cleanup_remove_data: true
+minio_cleanup_remove_certificates: true
+minio_cleanup_remove_docker_volumes: true
+minio_cleanup_remove_namespace: true

@@ -1,0 +1,57 @@
+---
+- name: Check for SonarQube Docker Compose file
+  ansible.builtin.stat:
+    path: "{{ sonarqube_compose_file }}"
+  register: sonarqube_compose_file_stat
+
+- name: Stop SonarQube Docker Compose stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ sonarqube_install_dir }}"
+    project_name: "{{ sonarqube_compose_project_name }}"
+    state: absent
+    remove_images: local
+    remove_orphans: true
+    remove_volumes: "{{ sonarqube_cleanup_remove_docker_volumes }}"
+  when: sonarqube_compose_file_stat.stat.exists
+
+- name: Gather service facts for SonarQube cleanup
+  ansible.builtin.service_facts:
+
+- name: Remove SonarQube Nginx enabled site
+  ansible.builtin.file:
+    path: "{{ sonarqube_nginx_site_enabled_path }}"
+    state: absent
+  register: sonarqube_nginx_enabled_cleanup
+
+- name: Remove SonarQube Nginx site file
+  ansible.builtin.file:
+    path: "{{ sonarqube_nginx_site_path }}"
+    state: absent
+  register: sonarqube_nginx_site_cleanup
+
+- name: Validate Nginx configuration after SonarQube cleanup
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  when: "'nginx.service' in ansible_facts.services"
+
+- name: Restart Nginx after SonarQube cleanup
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+  when:
+    - "'nginx.service' in ansible_facts.services"
+    - sonarqube_nginx_enabled_cleanup.changed or sonarqube_nginx_site_cleanup.changed
+
+- name: Remove SonarQube TLS certificate
+  ansible.builtin.command:
+    cmd: "certbot delete --non-interactive --cert-name {{ sonarqube_domain }}"
+  register: sonarqube_certbot_delete
+  changed_when: sonarqube_certbot_delete.rc == 0
+  failed_when: false
+  when: sonarqube_cleanup_remove_certificates | bool
+
+- name: Remove SonarQube installation directory
+  ansible.builtin.file:
+    path: "{{ sonarqube_install_dir }}"
+    state: absent
+  when: sonarqube_cleanup_remove_data | bool

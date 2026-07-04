@@ -1,0 +1,45 @@
+services:
+  minio:
+    image: {{ minio_image | quote }}
+    container_name: {{ minio_container_name | quote }}
+    restart: unless-stopped
+    command: server --address ":{{ minio_api_port }}" --console-address ":{{ minio_console_port }}" /data
+    networks:
+      - traefik_proxy
+    ports:
+      - "127.0.0.1:{{ minio_api_port }}:{{ minio_api_port }}"
+      - "127.0.0.1:{{ minio_console_port }}:{{ minio_console_port }}"
+    environment:
+      MINIO_ROOT_USER: {{ minio_root_user | quote }}
+      MINIO_ROOT_PASSWORD: {{ minio_root_password | quote }}
+{% if minio_use_domain | default(true) | bool %}
+      MINIO_SERVER_URL: {{ minio_server_url | quote }}
+      MINIO_BROWSER_REDIRECT_URL: {{ minio_browser_redirect_url | quote }}
+{% endif %}
+    volumes:
+      - "{{ minio_data_dir }}:/data"
+    labels:
+      - "traefik.enable=true"
+      # MinIO API Router
+      - "traefik.http.routers.minio-api.rule=Host(`{{ minio_api_domain }}`)"
+      - "traefik.http.routers.minio-api.entrypoints=websecure"
+      - "traefik.http.routers.minio-api.service=minio-api"
+      - "traefik.http.services.minio-api.loadbalancer.server.port={{ minio_api_port }}"
+{% if enable_tls | default(true) | bool %}
+      - "traefik.http.routers.minio-api.tls.certresolver=myresolver"
+{% endif %}
+      - "traefik.http.routers.minio-api.middlewares=security-headers@file"
+      
+      # MinIO Console Router
+      - "traefik.http.routers.minio-console.rule=Host(`{{ minio_console_domain }}`)"
+      - "traefik.http.routers.minio-console.entrypoints=websecure"
+      - "traefik.http.routers.minio-console.service=minio-console"
+      - "traefik.http.services.minio-console.loadbalancer.server.port={{ minio_console_port }}"
+{% if enable_tls | default(true) | bool %}
+      - "traefik.http.routers.minio-console.tls.certresolver=myresolver"
+{% endif %}
+      - "traefik.http.routers.minio-console.middlewares=security-headers@file"
+
+networks:
+  traefik_proxy:
+    external: true

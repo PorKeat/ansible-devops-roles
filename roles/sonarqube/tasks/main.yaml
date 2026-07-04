@@ -1,0 +1,25 @@
+---
+- name: Validate SonarQube configuration
+  ansible.builtin.include_tasks: validate.yaml
+
+- name: Prepare SonarQube host prerequisites
+  ansible.builtin.include_tasks: prerequisites.yaml
+  when:
+    - sonarqube_state == "present"
+    - sonarqube_manage_system_prereqs | bool
+
+- name: Deploy SonarQube in Docker mode
+  ansible.builtin.include_tasks: docker.yaml
+  when:
+    - sonarqube_state == "present"
+    - sonarqube_deploy_mode == "docker"
+
+- name: Deploy SonarQube in Kubernetes mode
+  ansible.builtin.include_tasks: k8s.yaml
+  when:
+    - sonarqube_state == "present"
+    - sonarqube_deploy_mode == "k8s"
+
+- name: Remove SonarQube deployment resources
+  ansible.builtin.include_tasks: cleanup.yaml
+  when: sonarqube_state == "absent"

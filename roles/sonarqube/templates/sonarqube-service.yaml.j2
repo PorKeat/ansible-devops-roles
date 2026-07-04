@@ -4,9 +4,13 @@ metadata:
   name: {{ sonarqube_service_name }}
   namespace: {{ sonarqube_namespace }}
 spec:
+  type: {{ ((sonarqube_deploy_mode == 'k8s') and not (sonarqube_use_domain | default(true) | bool)) | ternary('NodePort', sonarqube_service_type) }}
   selector:
     app: {{ sonarqube_service_name }}
   ports:
     - name: http
       port: {{ sonarqube_http_port }}
       targetPort: http
+{% if sonarqube_deploy_mode == 'k8s' and not (sonarqube_use_domain | default(true) | bool) %}
+      nodePort: {{ sonarqube_k8s_node_port | int }}
+{% endif %}

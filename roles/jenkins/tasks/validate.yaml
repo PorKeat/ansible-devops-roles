@@ -1,0 +1,43 @@
+---
+- name: Validate supported Jenkins deployment mode
+  ansible.builtin.assert:
+    that:
+      - jenkins_deploy_mode in ["docker", "k8s"]
+    fail_msg: "jenkins_deploy_mode must be either 'docker' or 'k8s'."
+
+- name: Validate Jenkins domain
+  ansible.builtin.assert:
+    that:
+      - (jenkins_domain | default('')) | length > 0
+    fail_msg: "jenkins_domain must be set when domain mode is enabled."
+  when:
+    - jenkins_use_domain | default(true) | bool
+
+- name: Validate TLS email when Docker TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - jenkins_tls_email | length > 0
+    fail_msg: "jenkins_tls_email must be set when jenkins_enable_tls is true in Docker mode."
+  when:
+    - jenkins_deploy_mode == "docker"
+    - jenkins_enable_tls | bool
+
+- name: Validate TLS secret name when Kubernetes TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - jenkins_ingress_tls_secret_name | length > 0
+    fail_msg: "jenkins_ingress_tls_secret_name must be set when jenkins_enable_tls is true in Kubernetes mode."
+  when:
+    - jenkins_deploy_mode == "k8s"
+    - jenkins_enable_tls | bool
+
+- name: Validate Jenkins node port for Kubernetes IP mode
+  ansible.builtin.assert:
+    that:
+      - jenkins_k8s_node_port | int >= 30000
+      - jenkins_k8s_node_port | int <= 32767
+    fail_msg: "jenkins_k8s_node_port must be in the 30000-32767 range."
+  when:
+    - jenkins_state == "present"
+    - jenkins_deploy_mode == "k8s"
+    - not jenkins_use_domain | default(true) | bool

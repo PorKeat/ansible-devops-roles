@@ -1,0 +1,26 @@
+---
+- name: Set Vault login method for testing mode
+  ansible.builtin.set_fact:
+    vault_login_text: "root token: {{ vault_root_token }}"
+    vault_note_text: "Vault UI is ready. Use the root token to sign in."
+  when: vault_mode == "testing"
+
+- name: Set Vault login method for production mode
+  ansible.builtin.set_fact:
+    vault_login_text: "run vault operator init first"
+    vault_note_text: "After init, unseal Vault manually and then sign in with the generated root token."
+  when: vault_mode == "production"
+
+- name: Set Vault firewall note
+  ansible.builtin.set_fact:
+    vault_firewall_note: "Allow GCP firewall TCP {{ vault_http_port }}"
+
+- name: Store Vault login information
+  ansible.builtin.set_fact:
+    vault_access_summary:
+      url: "{{ vault_public_url }}"
+      mode: "{{ vault_mode }}"
+      login: "{{ vault_login_text }}"
+      firewall: "{{ vault_firewall_note }}"
+      ui: "{{ vault_public_url }}/ui"
+      note: "{{ vault_note_text }}"

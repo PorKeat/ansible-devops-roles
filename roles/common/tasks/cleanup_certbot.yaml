@@ -1,0 +1,19 @@
+---
+- name: Remove Certbot packages
+  ansible.builtin.apt:
+    name: "{{ certbot_packages }}"
+    state: absent
+    purge: true
+    autoremove: true
+
+- name: Remove Certbot and Let's Encrypt data
+  ansible.builtin.file:
+    path: "{{ certbot_cleanup_path }}"
+    state: absent
+  loop:
+    - /etc/letsencrypt
+    - /var/lib/letsencrypt
+    - /var/log/letsencrypt
+  loop_control:
+    loop_var: certbot_cleanup_path
+  when: common_cleanup_remove_certificates | bool

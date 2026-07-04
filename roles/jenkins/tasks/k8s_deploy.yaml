@@ -1,0 +1,23 @@
+---
+- name: Create Jenkins persistent volume claim
+  kubernetes.core.k8s:
+    kubeconfig: "{{ jenkins_kubeconfig_path }}"
+    validate_certs: "{{ jenkins_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'jenkins-pvc.yaml.j2') | from_yaml }}"
+  when: jenkins_use_pvc | bool
+
+- name: Create Jenkins deployment
+  kubernetes.core.k8s:
+    kubeconfig: "{{ jenkins_kubeconfig_path }}"
+    validate_certs: "{{ jenkins_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'jenkins-deployment.yaml.j2') | from_yaml }}"
+  register: jenkins_k8s_deployment_apply
+
+- name: Create Jenkins service
+  kubernetes.core.k8s:
+    kubeconfig: "{{ jenkins_kubeconfig_path }}"
+    validate_certs: "{{ jenkins_k8s_validate_certs }}"
+    state: present
+    definition: "{{ lookup('template', 'jenkins-service.yaml.j2') | from_yaml }}"

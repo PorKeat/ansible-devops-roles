@@ -1,0 +1,14 @@
+---
+- name: Remove kubectl packages
+  ansible.builtin.apt:
+    name: "{{ kubectl_packages }}"
+    state: absent
+    purge: true
+    autoremove: true
+
+- name: Remove Kubernetes apt repository
+  ansible.builtin.apt_repository:
+    repo: "{{ kubectl_apt_repo }}"
+    filename: kubernetes
+    state: absent
+    update_cache: true

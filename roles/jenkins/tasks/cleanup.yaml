@@ -1,0 +1,8 @@
+---
+- name: Remove Jenkins Docker resources
+  ansible.builtin.include_tasks: cleanup_docker.yaml
+  when: jenkins_deploy_mode == "docker"
+
+- name: Remove Jenkins Kubernetes resources
+  ansible.builtin.include_tasks: cleanup_k8s.yaml
+  when: jenkins_deploy_mode == "k8s"

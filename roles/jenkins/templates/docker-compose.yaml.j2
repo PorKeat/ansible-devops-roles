@@ -1,0 +1,30 @@
+services:
+  jenkins:
+    image: {{ jenkins_image | quote }}
+    container_name: {{ jenkins_container_name | quote }}
+    restart: unless-stopped
+    networks:
+      - traefik_proxy
+    ports:
+      - "127.0.0.1:{{ jenkins_http_port }}:8080"
+      - "127.0.0.1:{{ jenkins_agent_port }}:50000"
+    environment:
+      JENKINS_OPTS: "--httpPort=8080"
+{% if jenkins_java_opts | length > 0 %}
+      JAVA_OPTS: {{ jenkins_java_opts | quote }}
+{% endif %}
+    volumes:
+      - "{{ jenkins_data_dir }}:/var/jenkins_home"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jenkins.rule=Host(`{{ jenkins_domain }}`)"
+      - "traefik.http.routers.jenkins.entrypoints=websecure"
+{% if enable_tls | default(true) | bool %}
+      - "traefik.http.routers.jenkins.tls.certresolver=myresolver"
+{% endif %}
+      - "traefik.http.routers.jenkins.middlewares=security-headers@file"
+      - "traefik.http.services.jenkins.loadbalancer.server.port=8080"
+
+networks:
+  traefik_proxy:
+    external: true

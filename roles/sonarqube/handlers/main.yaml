@@ -1,0 +1,9 @@
+---
+- name: restart nginx for sonarqube
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+
+- name: reload sysctl for sonarqube
+  ansible.builtin.command: sysctl --system
+  changed_when: true
