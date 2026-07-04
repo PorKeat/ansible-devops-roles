@@ -28,7 +28,7 @@
       when: deployment_state != "absent"
 
 - name: Deploy Traefik Proxy
-  hosts: all
+  hosts: common_targets
   become: true
   vars_files:
     - ../config.yaml
