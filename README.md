@@ -205,7 +205,7 @@ just vault-token
 
 - `just destroy` respects the tool booleans
 - `just destroy-all` removes everything no matter what the booleans are
-- This setup uses **Traefik** as the reverse proxy instead of Nginx. Traefik automatically discovers containers and handles Let's Encrypt certificates.
+- **Reverse Proxy:** This setup now uses **Traefik Proxy** instead of Nginx. Traefik dynamically discovers Docker containers and automatically handles Let's Encrypt SSL/TLS certificates via Docker labels. Nginx and Certbot have been removed for a more modern, best-practice approach.
 - Harbor firewall: allow `8081` for HTTP or `8443` for HTTPS
 - Vault firewall: allow `8200`
 - MinIO uses separate API and console domains when `use_domain: true`

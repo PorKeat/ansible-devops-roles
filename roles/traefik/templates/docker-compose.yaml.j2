@@ -18,7 +18,6 @@ services:
       - /opt/traefik/data/acme.json:/acme.json
       - /opt/traefik/data/dynamic_conf.yaml:/dynamic_conf.yaml:ro
     command:
-      - "--log.level=DEBUG"
       - "--api.insecure=false"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
